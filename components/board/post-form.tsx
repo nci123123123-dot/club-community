@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getRepository } from "@/lib/data";
-import { detectLanguage, translatePost } from "@/lib/translate";
+import { detectLanguage } from "@/lib/translate";
+import { autoTranslatePost } from "@/lib/translate-client";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { PollBuilder, emptyPollDraft, type PollDraft } from "@/components/poll/poll-builder";
@@ -52,7 +53,7 @@ export function PostForm() {
     try {
       const repo = getRepository();
       const originalLanguage = detectLanguage(`${title} ${content}`);
-      const translations = await translatePost(
+      const translations = await autoTranslatePost(
         title.trim(),
         content.trim(),
         originalLanguage

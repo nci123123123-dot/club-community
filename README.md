@@ -53,9 +53,17 @@ npm run build    # 프로덕션 빌드
 
 > API 키는 채팅/커밋에 붙여넣지 말고 반드시 `.env.local`에만 두세요. (`.env*.local`은 git에서 제외됩니다.)
 
-## 자동 번역 교체 (DeepL / OpenAI)
+## 자동 번역
 
-`lib/translate.ts`의 `translate(text, from, to)`는 DeepL/OpenAI 번역 호출과 동일한 시그니처입니다. 현재는 사전 매칭 + 프리픽스 mock이며, 내부 구현만 실제 API 호출로 바꾸면 됩니다. 키는 `.env.local`의 `DEEPL_API_KEY` 또는 `OPENAI_API_KEY`로 주입하세요.
+게시글 작성 시 원본 언어를 감지해 나머지 4개 언어로 **실제 번역**한 뒤 저장합니다. 외국인 유학생은 자신이 선택한 언어로 글을 읽고, 상세 화면에서 원문도 토글로 볼 수 있습니다.
+
+- 번역은 서버 라우트 `app/api/translate/route.ts`를 통해 수행됩니다 (클라이언트가 외부 API를 직접 호출하지 않음).
+- **키 없이 동작**: 기본값은 무료·무가입 [MyMemory](https://mymemory.translated.net/) API.
+- **품질 업그레이드**: `.env.local`에 `OPENAI_API_KEY`를 넣으면 자동으로 OpenAI(gpt-4o-mini)로 전환됩니다.
+- 네트워크/쿼터 문제로 번역 API가 실패하면 오프라인 mock 번역기로 폴백해 글쓰기는 항상 성공합니다.
+- DeepL은 베트남어를 지원하지 않아 사용하지 않습니다.
+
+> 게시글 본문이 번역 API(MyMemory/OpenAI)로 전송되는 점을 유의하세요. 사내/민감 내용은 자체 호스팅 번역기로 교체하는 것을 권장합니다.
 
 ## 보안 모델
 
