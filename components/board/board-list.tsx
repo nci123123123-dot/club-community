@@ -8,6 +8,7 @@ import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
 import { useT } from "@/lib/i18n/provider";
 import { PostCard } from "./post-card";
+import { TranslatedText } from "@/components/translated-text";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -106,7 +107,7 @@ export function BoardList() {
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
-              #{tag}
+              <TranslatedText text={tag} prefix="#" />
             </button>
           ))}
         </div>

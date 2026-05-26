@@ -1,8 +1,25 @@
 import type { DataRepository } from "./repository";
-import { translatePost } from "../translate";
+import type { Poll, Post, Schedule } from "./types";
+import { autoTranslatePost } from "../translate-client";
 import { read, write } from "./mock/store";
 
-const SEED_FLAG = "cc.seeded";
+// Bump when the sample content (or its translations) changes so existing
+// installs re-seed. v1 used the offline mock translator; v2 uses real
+// translations via /api/translate.
+const SEED_VERSION = 2;
+const VERSION_KEY = "cc.seedVersion";
+const LEGACY_FLAG = "cc.seeded";
+
+// Mock-store collection keys (kept in sync with lib/data/mock/index.ts).
+const MK = {
+  posts: "cc.posts",
+  polls: "cc.polls",
+  votes: "cc.votes",
+  schedules: "cc.schedules",
+} as const;
+
+const SEED_AUTHOR = "seed-admin";
+const SEED_SCHEDULE_TITLES = new Set(["신입 환영회", "정기 모임", "5월 MT"]);
 
 function daysFromNow(days: number, hour = 18): string {
   const d = new Date();
@@ -12,21 +29,66 @@ function daysFromNow(days: number, hour = 18): string {
 }
 
 /**
- * Populate the (mock) repository with sample content once. Idempotent: guarded
- * by a flag so repeated calls are no-ops.
+ * Remove only seed-authored sample content (posts by SEED_AUTHOR and their
+ * polls/votes, plus seed schedules). User-created content is preserved.
+ */
+function removeSeedArtifacts(): void {
+  const posts = read<Post[]>(MK.posts, []);
+  const seedPostIds = new Set(
+    posts.filter((p) => p.authorId === SEED_AUTHOR).map((p) => p.id)
+  );
+
+  const polls = read<Poll[]>(MK.polls, []);
+  const seedPollIds = new Set(
+    polls.filter((p) => seedPostIds.has(p.postId)).map((p) => p.id)
+  );
+
+  write(
+    MK.posts,
+    posts.filter((p) => !seedPostIds.has(p.id))
+  );
+  write(
+    MK.polls,
+    polls.filter((p) => !seedPollIds.has(p.id))
+  );
+  write(
+    MK.votes,
+    read<{ pollId: string }[]>(MK.votes, []).filter(
+      (v) => !seedPollIds.has(v.pollId)
+    )
+  );
+  write(
+    MK.schedules,
+    read<Schedule[]>(MK.schedules, []).filter(
+      (s) => !(SEED_SCHEDULE_TITLES.has(s.title) || seedPostIds.has(s.postId ?? ""))
+    )
+  );
+}
+
+/**
+ * Populate the (mock) repository with sample content. Idempotent per version:
+ * if the current SEED_VERSION is already applied it is a no-op; otherwise it
+ * clears prior seed artifacts and reseeds with freshly translated content.
  */
 export async function seedRepository(repo: DataRepository): Promise<void> {
-  if (read<boolean>(SEED_FLAG, false)) return;
-  write(SEED_FLAG, true);
+  const applied = read<number>(VERSION_KEY, 0);
+  if (applied === SEED_VERSION) return;
+
+  // Migrate: drop any previous sample content (v1 set the legacy flag).
+  if (applied > 0 || read<boolean>(LEGACY_FLAG, false)) {
+    removeSeedArtifacts();
+  }
+  write(VERSION_KEY, SEED_VERSION);
+  write(LEGACY_FLAG, true);
 
   // --- Notice post ---
-  const noticeTranslations = await translatePost(
+  const noticeTranslations = await autoTranslatePost(
     "동아리 신입 환영회 공지",
     "이번 주 금요일에 신입 환영회를 진행합니다. 많은 참여 바랍니다!",
     "ko"
   );
   await repo.createPost({
-    authorId: "seed-admin",
+    authorId: SEED_AUTHOR,
     authorNationality: "KR",
     originalLanguage: "ko",
     tags: ["공지"],
@@ -34,13 +96,13 @@ export async function seedRepository(repo: DataRepository): Promise<void> {
   });
 
   // --- MT post + poll + sample votes ---
-  const mtTranslations = await translatePost(
+  const mtTranslations = await autoTranslatePost(
     "5월 MT 일정 투표",
     "5월 MT 날짜를 정하려고 합니다. 참여 가능 여부를 투표해주세요.",
     "ko"
   );
   const mtPost = await repo.createPost({
-    authorId: "seed-admin",
+    authorId: SEED_AUTHOR,
     authorNationality: "KR",
     originalLanguage: "ko",
     tags: ["MT", "일정"],
@@ -59,7 +121,11 @@ export async function seedRepository(repo: DataRepository): Promise<void> {
     ],
   });
 
-  const sampleVotes: { studentId: string; nationality: "KR" | "JP" | "CN" | "VN"; option: string }[] = [
+  const sampleVotes: {
+    studentId: string;
+    nationality: "KR" | "JP" | "CN" | "VN";
+    option: string;
+  }[] = [
     { studentId: "seed-1", nationality: "KR", option: "opt-yes" },
     { studentId: "seed-2", nationality: "KR", option: "opt-yes" },
     { studentId: "seed-3", nationality: "KR", option: "opt-yes" },

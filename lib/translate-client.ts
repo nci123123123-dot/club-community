@@ -2,11 +2,12 @@ import type { Language, Translation } from "./data/types";
 import { LANGUAGES } from "./data/types";
 import { translatePost as mockTranslatePost } from "./translate";
 
-async function callTranslateApi(
+export async function translateTexts(
   texts: string[],
   from: Language,
   to: Language
 ): Promise<string[]> {
+  if (from === to) return texts;
   const res = await fetch("/api/translate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -32,7 +33,7 @@ export async function autoTranslatePost(
     return await Promise.all(
       LANGUAGES.map(async (language): Promise<Translation> => {
         if (language === from) return { language, title, content };
-        const [translatedTitle, translatedContent] = await callTranslateApi(
+        const [translatedTitle, translatedContent] = await translateTexts(
           [title, content],
           from,
           language

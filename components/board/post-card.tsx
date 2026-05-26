@@ -7,6 +7,7 @@ import { getTranslation, excerpt } from "@/lib/post";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
 import { NationalityBadge } from "@/components/nationality-badge";
+import { TranslatedText } from "@/components/translated-text";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -35,7 +36,7 @@ export function PostCard({ post, hasPoll }: PostCardProps) {
           <NationalityBadge nationality={post.authorNationality} />
           {post.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="font-normal">
-              #{tag}
+              <TranslatedText text={tag} prefix="#" />
             </Badge>
           ))}
           <span className="ml-auto">{formatDateTime(post.createdAt, lang)}</span>

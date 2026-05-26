@@ -31,7 +31,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     let active = true;
     async function bootstrap() {
       const repo = getRepository();
-      await seedRepository(repo);
+      // Sample seeding targets the mock backend; skip it for Supabase.
+      if (process.env.NEXT_PUBLIC_DATA_SOURCE !== "supabase") {
+        try {
+          await seedRepository(repo);
+        } catch {
+          // Non-fatal: app still works without sample data.
+        }
+      }
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const stored = raw ? (JSON.parse(raw) as User) : null;
       if (stored) {

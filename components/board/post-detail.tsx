@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n/provider";
 import { PollView } from "@/components/poll/poll-view";
 import { CommentSection } from "@/components/board/comment-section";
 import { NationalityBadge } from "@/components/nationality-badge";
+import { TranslatedText } from "@/components/translated-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -81,7 +82,7 @@ export function PostDetail({ postId }: PostDetailProps) {
           <NationalityBadge nationality={post.authorNationality} />
           {post.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="font-normal">
-              #{tag}
+              <TranslatedText text={tag} prefix="#" />
             </Badge>
           ))}
           <span className="ml-auto">{formatDateTime(post.createdAt, lang)}</span>

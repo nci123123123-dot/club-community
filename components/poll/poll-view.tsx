@@ -10,6 +10,7 @@ import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { formatDate } from "@/lib/format";
 import { NATIONALITY_COLOR } from "@/lib/nationality";
+import { TranslatedText } from "@/components/translated-text";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,9 @@ export function PollView({ poll }: PollViewProps) {
   return (
     <Card className="gap-4 p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-semibold">{poll.question}</h2>
+        <h2 className="font-semibold">
+          <TranslatedText text={poll.question} />
+        </h2>
         {isClosed && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             {t("poll.closed")}
@@ -103,7 +106,9 @@ export function PollView({ poll }: PollViewProps) {
             return (
               <div key={result.optionId} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{result.label}</span>
+                  <span className="font-medium">
+                    <TranslatedText text={result.label} />
+                  </span>
                   <span className="text-muted-foreground">
                     {result.total} {t("common.people")}
                   </span>
@@ -164,7 +169,7 @@ export function PollView({ poll }: PollViewProps) {
                     >
                       {active && <Check className="size-3" />}
                     </span>
-                    {option.label}
+                    <TranslatedText text={option.label} />
                   </button>
                 );
               })}
