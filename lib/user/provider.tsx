@@ -42,7 +42,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const stored = raw ? (JSON.parse(raw) as User) : null;
       if (stored) {
-        await seedUserNotifications(repo, stored.id);
+        try {
+          await seedUserNotifications(repo, stored.id);
+        } catch {
+          // Non-fatal: starter notifications are optional.
+        }
       }
       if (active) {
         setUserState(stored);
