@@ -111,22 +111,42 @@ async function translateWithOpenAI(
   return parsed.map(String);
 }
 
-// ---- Korean jamo (초성) preprocessor ----
-// Expands common Korean internet abbreviations so Google Translate can understand them.
+// ---- Korean text preprocessor ----
+// 1) Expands common internet jamo (초성) abbreviations.
+// 2) Normalises colloquial 안/못+verb (no space) → 안/못 +verb so Google Translate
+//    correctly recognises the negation.  Compound nouns starting with 안/못 that are
+//    NOT negation markers are excluded via negative-lookahead.
 
 function expandKoreanJamo(text: string): string {
-  return text
-    .replace(/ㄱㄱ+/g, "고고")
-    .replace(/ㄷㄷ+/g, "덜덜")
-    .replace(/ㅋ{2,}/g, "크크크")
-    .replace(/ㅎ{2,}/g, "하하하")
-    .replace(/ㅠ{2,}|ㅜ{2,}/g, "흑흑")
-    .replace(/ㅇㅇ/g, "응응")
-    .replace(/ㄴㄴ/g, "노노")
-    .replace(/ㅂㅂ/g, "바이바이")
-    .replace(/ㄹㅇ/g, "리얼")
-    .replace(/ㅈㅅ/g, "죄송해요")
-    .replace(/ㄳ/g, "감사해요");
+  return (
+    text
+      // --- Negation spacing ---
+      // Insert space between 안 (negation) and a following syllable.
+      // Excluded: 안녕(hello) 안전(safety) 안쪽(inside) 안타(unfortunate/hit)
+      //           안내(guidance) 안심(relief) 안경(glasses) 안건(agenda)
+      //           안방(bedroom) 안색(complexion) 안착(landing) 안부(greetings)
+      //           안식(rest) 안락(comfort) 안정(stability) 안팎(inside/outside)
+      //           안중(consideration) 안장(saddle)
+      .replace(
+        /안(?!녕|전|쪽|타|내|심|경|건|방|색|착|부|식|락|정|팎|중|장)([가-힣])/g,
+        "안 $1"
+      )
+      // Insert space between 못 (negation) and a following syllable.
+      // Excluded: 못생기다(ugly) 못나다(incompetent) 못난(incompetent)
+      .replace(/못(?!생|나|난)([가-힣])/g, "못 $1")
+      // --- Jamo expansion ---
+      .replace(/ㄱㄱ+/g, "고고")
+      .replace(/ㄷㄷ+/g, "덜덜")
+      .replace(/ㅋ{2,}/g, "크크크")
+      .replace(/ㅎ{2,}/g, "하하하")
+      .replace(/ㅠ{2,}|ㅜ{2,}/g, "흑흑")
+      .replace(/ㅇㅇ/g, "응응")
+      .replace(/ㄴㄴ/g, "노노")
+      .replace(/ㅂㅂ/g, "바이바이")
+      .replace(/ㄹㅇ/g, "리얼")
+      .replace(/ㅈㅅ/g, "죄송해요")
+      .replace(/ㄳ/g, "감사해요")
+  );
 }
 
 // ---- Google translate provider (free, no API key required) ----
