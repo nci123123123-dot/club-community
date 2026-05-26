@@ -4,6 +4,7 @@ import type {
   Nationality,
   Poll,
   PollResult,
+  PollVote,
   Post,
   Schedule,
   User,
@@ -22,6 +23,7 @@ export interface Voter {
 export interface DataRepository {
   // users
   findUserByStudentId(studentId: string): Promise<User | null>;
+  getUserById(id: string): Promise<User | null>;
   createUser(
     input: Omit<User, "id" | "createdAt" | "isAdmin">
   ): Promise<User>;
@@ -30,6 +32,7 @@ export interface DataRepository {
   listPosts(): Promise<Post[]>;
   getPost(id: string): Promise<Post | null>;
   createPost(input: Omit<Post, "id" | "createdAt">): Promise<Post>;
+  deletePost(id: string): Promise<void>;
 
   // polls
   getPollByPostId(postId: string): Promise<Poll | null>;
@@ -38,6 +41,7 @@ export interface DataRepository {
   hasVoted(pollId: string, studentId: string): Promise<boolean>;
   getPollResults(pollId: string): Promise<PollResult[]>;
   getPollTotalVoters(pollId: string): Promise<number>;
+  getPollVotes(pollId: string): Promise<PollVote[]>;
 
   // schedules
   listSchedules(): Promise<Schedule[]>;

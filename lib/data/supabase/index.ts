@@ -4,6 +4,7 @@ import type {
   Comment,
   Poll,
   PollResult,
+  PollVote,
   Post,
   Schedule,
   User,
@@ -41,6 +42,10 @@ export class SupabaseRepository implements DataRepository {
     return notConfigured();
   }
 
+  async getUserById(_id: string): Promise<User | null> {
+    return notConfigured();
+  }
+
   async createUser(
     _input: Omit<User, "id" | "createdAt" | "isAdmin">
   ): Promise<User> {
@@ -58,6 +63,10 @@ export class SupabaseRepository implements DataRepository {
   }
 
   async createPost(_input: Omit<Post, "id" | "createdAt">): Promise<Post> {
+    return notConfigured();
+  }
+
+  async deletePost(_id: string): Promise<void> {
     return notConfigured();
   }
 
@@ -88,6 +97,10 @@ export class SupabaseRepository implements DataRepository {
   }
 
   async getPollTotalVoters(_pollId: string): Promise<number> {
+    return notConfigured();
+  }
+
+  async getPollVotes(_pollId: string): Promise<PollVote[]> {
     return notConfigured();
   }
 

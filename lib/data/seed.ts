@@ -5,8 +5,8 @@ import { read, write } from "./mock/store";
 
 // Bump when the sample content (or its translations) changes so existing
 // installs re-seed. v1 used the offline mock translator; v2 uses real
-// translations via /api/translate.
-const SEED_VERSION = 2;
+// translations via /api/translate. v3 adds admin support + full data reset.
+const SEED_VERSION = 3;
 const VERSION_KEY = "cc.seedVersion";
 const LEGACY_FLAG = "cc.seeded";
 
@@ -28,41 +28,25 @@ function daysFromNow(days: number, hour = 18): string {
   return d.toISOString();
 }
 
+// localStorage key used by lib/user/provider.tsx to persist the logged-in user.
+const CURRENT_USER_KEY = "cc.currentUser";
+
 /**
- * Remove only seed-authored sample content (posts by SEED_AUTHOR and their
- * polls/votes, plus seed schedules). User-created content is preserved.
+ * Full data reset: wipe all content and users so the app starts clean.
+ * Called on every seed-version upgrade to ensure no stale test data persists.
  */
-function removeSeedArtifacts(): void {
-  const posts = read<Post[]>(MK.posts, []);
-  const seedPostIds = new Set(
-    posts.filter((p) => p.authorId === SEED_AUTHOR).map((p) => p.id)
-  );
-
-  const polls = read<Poll[]>(MK.polls, []);
-  const seedPollIds = new Set(
-    polls.filter((p) => seedPostIds.has(p.postId)).map((p) => p.id)
-  );
-
-  write(
-    MK.posts,
-    posts.filter((p) => !seedPostIds.has(p.id))
-  );
-  write(
-    MK.polls,
-    polls.filter((p) => !seedPollIds.has(p.id))
-  );
-  write(
-    MK.votes,
-    read<{ pollId: string }[]>(MK.votes, []).filter(
-      (v) => !seedPollIds.has(v.pollId)
-    )
-  );
-  write(
-    MK.schedules,
-    read<Schedule[]>(MK.schedules, []).filter(
-      (s) => !(SEED_SCHEDULE_TITLES.has(s.title) || seedPostIds.has(s.postId ?? ""))
-    )
-  );
+function resetAllData(): void {
+  write(MK.posts, []);
+  write(MK.polls, []);
+  write(MK.votes, []);
+  write(MK.schedules, []);
+  write("cc.users", []);
+  write("cc.comments", []);
+  write("cc.notifications", []);
+  // Clear the persisted logged-in user so they re-onboard with clean state.
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(CURRENT_USER_KEY);
+  }
 }
 
 /**
@@ -74,10 +58,8 @@ export async function seedRepository(repo: DataRepository): Promise<void> {
   const applied = read<number>(VERSION_KEY, 0);
   if (applied === SEED_VERSION) return;
 
-  // Migrate: drop any previous sample content (v1 set the legacy flag).
-  if (applied > 0 || read<boolean>(LEGACY_FLAG, false)) {
-    removeSeedArtifacts();
-  }
+  // Full reset on every version upgrade — clears test/stale data.
+  resetAllData();
   write(VERSION_KEY, SEED_VERSION);
   write(LEGACY_FLAG, true);
 

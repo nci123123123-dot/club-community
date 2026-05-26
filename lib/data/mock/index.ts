@@ -11,6 +11,7 @@ import type {
   User,
 } from "../types";
 import { NATIONALITIES } from "../types";
+import { ADMIN_STUDENT_ID } from "../../admin";
 import { read, write, uid, nowIso } from "./store";
 
 const KEY = {
@@ -36,14 +37,17 @@ export interface MockRepositoryOptions {
 }
 
 export class MockRepository implements DataRepository {
-  // The option is accepted for API symmetry; seeding is performed externally
-  // (see lib/data/seed.ts) so the constructor stays synchronous and pure.
   constructor(_options: MockRepositoryOptions = {}) {}
 
   // ---- users ----
   async findUserByStudentId(studentId: string): Promise<User | null> {
     const users = read<User[]>(KEY.users, []);
     return users.find((u) => u.studentId === studentId) ?? null;
+  }
+
+  async getUserById(id: string): Promise<User | null> {
+    const users = read<User[]>(KEY.users, []);
+    return users.find((u) => u.id === id) ?? null;
   }
 
   async createUser(
@@ -56,7 +60,7 @@ export class MockRepository implements DataRepository {
     const user: User = {
       ...input,
       id: uid(),
-      isAdmin: false,
+      isAdmin: input.studentId === ADMIN_STUDENT_ID,
       createdAt: nowIso(),
     };
     const users = read<User[]>(KEY.users, []);
@@ -80,6 +84,23 @@ export class MockRepository implements DataRepository {
     const posts = read<Post[]>(KEY.posts, []);
     write(KEY.posts, [...posts, post]);
     return post;
+  }
+
+  async deletePost(id: string): Promise<void> {
+    write(KEY.posts, read<Post[]>(KEY.posts, []).filter((p) => p.id !== id));
+    const polls = read<Poll[]>(KEY.polls, []);
+    const deletedPollIds = new Set(
+      polls.filter((p) => p.postId === id).map((p) => p.id)
+    );
+    write(KEY.polls, polls.filter((p) => p.postId !== id));
+    write(
+      KEY.votes,
+      read<PollVote[]>(KEY.votes, []).filter((v) => !deletedPollIds.has(v.pollId))
+    );
+    write(
+      KEY.comments,
+      read<Comment[]>(KEY.comments, []).filter((c) => c.postId !== id)
+    );
   }
 
   // ---- polls ----
@@ -160,6 +181,10 @@ export class MockRepository implements DataRepository {
       (v) => v.pollId === pollId
     );
     return new Set(votes.map((v) => v.studentId)).size;
+  }
+
+  async getPollVotes(pollId: string): Promise<PollVote[]> {
+    return read<PollVote[]>(KEY.votes, []).filter((v) => v.pollId === pollId);
   }
 
   // ---- schedules ----

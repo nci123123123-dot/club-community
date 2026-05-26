@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
-import type { Nationality, Poll, PollResult } from "@/lib/data/types";
+import type { Nationality, Poll, PollResult, PollVote } from "@/lib/data/types";
 import { NATIONALITIES } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
+import { isAdmin } from "@/lib/admin";
 import { formatDate } from "@/lib/format";
 import { NATIONALITY_COLOR } from "@/lib/nationality";
 import { TranslatedText } from "@/components/translated-text";
@@ -28,20 +29,24 @@ export function PollView({ poll }: PollViewProps) {
   const [totalVoters, setTotalVoters] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [allVotes, setAllVotes] = useState<PollVote[]>([]);
 
+  const admin = isAdmin(user);
   const isClosed = !!poll.closesAt && new Date(poll.closesAt).getTime() < Date.now();
 
   const refresh = useCallback(async () => {
     const repo = getRepository();
-    const [res, total, didVote] = await Promise.all([
+    const [res, total, didVote, votes] = await Promise.all([
       repo.getPollResults(poll.id),
       repo.getPollTotalVoters(poll.id),
       user ? repo.hasVoted(poll.id, user.studentId) : Promise.resolve(false),
+      admin ? repo.getPollVotes(poll.id) : Promise.resolve([]),
     ]);
     setResults(res);
     setTotalVoters(total);
     setVoted(didVote);
-  }, [poll.id, user]);
+    setAllVotes(votes);
+  }, [poll.id, user, admin]);
 
   useEffect(() => {
     void refresh();
@@ -80,6 +85,11 @@ export function PollView({ poll }: PollViewProps) {
   }
 
   const showResults = voted || isClosed;
+
+  // Build a label lookup from poll options for the admin voter table.
+  const optionLabel = Object.fromEntries(
+    poll.options.map((o) => [o.id, o.label])
+  );
 
   return (
     <Card className="gap-4 p-5">
@@ -187,6 +197,50 @@ export function PollView({ poll }: PollViewProps) {
             {submitting && <Loader2 className="size-4 animate-spin" />}
             {t("poll.vote")}
           </Button>
+        </div>
+      )}
+
+      {/* Admin-only voter list */}
+      {admin && (
+        <div className="border-t pt-4">
+          <p className="mb-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
+            {t("admin.voterList")}
+          </p>
+          {allVotes.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t("admin.noVoters")}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-1 pr-4 font-medium">{t("admin.studentId")}</th>
+                    <th className="pb-1 pr-4 font-medium">{t("board.writtenBy")}</th>
+                    <th className="pb-1 font-medium">{t("poll.option")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allVotes.map((v) => (
+                    <tr key={v.id} className="border-b border-border/50 last:border-0">
+                      <td className="py-1 pr-4 font-mono">{v.studentId}</td>
+                      <td className="py-1 pr-4">
+                        <span className="inline-flex items-center gap-1">
+                          <span
+                            aria-hidden
+                            className="size-1.5 rounded-full"
+                            style={{ backgroundColor: NATIONALITY_COLOR[v.nationality] }}
+                          />
+                          {t(`nationality.${v.nationality}`)}
+                        </span>
+                      </td>
+                      <td className="py-1">
+                        <TranslatedText text={optionLabel[v.optionId] ?? v.optionId} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </Card>

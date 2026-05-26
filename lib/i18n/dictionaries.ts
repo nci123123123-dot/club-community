@@ -135,6 +135,13 @@ const ko: Dictionary = {
   "lottery.spinning": "두근두근...",
   "lottery.win": "커피 기프티콘 당첨! 🎉",
   "lottery.lose": "아쉽네요, 다음 기회에! ☕",
+  "admin.badge": "관리자",
+  "admin.authorInfo": "작성자 정보",
+  "admin.studentId": "학번",
+  "admin.deletePost": "글 삭제",
+  "admin.deleteConfirm": "이 글을 삭제할까요? 되돌릴 수 없습니다.",
+  "admin.voterList": "투표 참여자 목록",
+  "admin.noVoters": "아직 투표한 사람이 없습니다",
 };
 
 const ja: Dictionary = {
@@ -270,6 +277,13 @@ const ja: Dictionary = {
   "lottery.spinning": "ドキドキ...",
   "lottery.win": "コーヒーギフト当選！🎉",
   "lottery.lose": "残念、次回また！☕",
+  "admin.badge": "管理者",
+  "admin.authorInfo": "投稿者情報",
+  "admin.studentId": "学籍番号",
+  "admin.deletePost": "投稿を削除",
+  "admin.deleteConfirm": "この投稿を削除しますか？元に戻せません。",
+  "admin.voterList": "投票者リスト",
+  "admin.noVoters": "まだ投票者がいません",
 };
 
 const zh: Dictionary = {
@@ -405,6 +419,13 @@ const zh: Dictionary = {
   "lottery.spinning": "转动中...",
   "lottery.win": "获得咖啡礼品卡！🎉",
   "lottery.lose": "很遗憾，下次再来！☕",
+  "admin.badge": "管理员",
+  "admin.authorInfo": "作者信息",
+  "admin.studentId": "学号",
+  "admin.deletePost": "删除帖子",
+  "admin.deleteConfirm": "确定要删除这篇帖子吗？此操作无法撤销。",
+  "admin.voterList": "投票者列表",
+  "admin.noVoters": "暂无投票者",
 };
 
 const vi: Dictionary = {
@@ -540,6 +561,13 @@ const vi: Dictionary = {
   "lottery.spinning": "Đang quay...",
   "lottery.win": "Trúng voucher cà phê! 🎉",
   "lottery.lose": "Chúc may mắn lần sau! ☕",
+  "admin.badge": "Quản trị viên",
+  "admin.authorInfo": "Thông tin tác giả",
+  "admin.studentId": "Mã sinh viên",
+  "admin.deletePost": "Xóa bài viết",
+  "admin.deleteConfirm": "Bạn có chắc muốn xóa bài này không? Không thể hoàn tác.",
+  "admin.voterList": "Danh sách người bình chọn",
+  "admin.noVoters": "Chưa có ai bình chọn",
 };
 
 const en: Dictionary = {
@@ -675,6 +703,13 @@ const en: Dictionary = {
   "lottery.spinning": "Spinning...",
   "lottery.win": "Coffee Gift Card! 🎉",
   "lottery.lose": "Better luck next time! ☕",
+  "admin.badge": "Admin",
+  "admin.authorInfo": "Author Info",
+  "admin.studentId": "Student ID",
+  "admin.deletePost": "Delete Post",
+  "admin.deleteConfirm": "Delete this post? This cannot be undone.",
+  "admin.voterList": "Voter List",
+  "admin.noVoters": "No voters yet",
 };
 
 export const dictionaries: Record<Language, Dictionary> = { ko, ja, zh, vi, en };
