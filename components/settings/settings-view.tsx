@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Check } from "lucide-react";
-import type { Language } from "@/lib/data/types";
+import { Check, Trophy } from "lucide-react";
+import type { Language, LotteryWin } from "@/lib/data/types";
 import { LANGUAGES } from "@/lib/data/types";
+import { getRepository } from "@/lib/data";
+import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { Card } from "@/components/ui/card";
@@ -34,12 +36,23 @@ export function SettingsView() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
+  const [lotteryWins, setLotteryWins] = useState<LotteryWin[]>([]);
 
   useEffect(() => {
     setMounted(true);
     const raw = window.localStorage.getItem(NOTIF_KEY);
     if (raw) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(raw) });
   }, []);
+
+  useEffect(() => {
+    if (!user || user.nationality === "KR") return;
+    let active = true;
+    void getRepository()
+      .getLotteryWins(user.studentId)
+      .then((wins) => { if (active) setLotteryWins(wins); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [user]);
 
   function updatePref(key: keyof NotifPrefs, value: boolean) {
     const next = { ...prefs, [key]: value };
@@ -124,6 +137,36 @@ export function SettingsView() {
               <dd className="font-mono">{user.studentId}</dd>
             </div>
           </dl>
+        </Card>
+      )}
+
+      {user && user.nationality !== "KR" && (
+        <Card className="gap-3 p-4">
+          <div className="flex items-center gap-2">
+            <Trophy className="size-4 text-amber-500" />
+            <h2 className="font-semibold">{t("lottery.winsSection")}</h2>
+            {lotteryWins.length > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                {lotteryWins.length}
+              </span>
+            )}
+          </div>
+          {lotteryWins.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("lottery.noWins")}</p>
+          ) : (
+            <ul className="space-y-2">
+              {lotteryWins.map((win) => (
+                <li key={win.id} className="flex items-center justify-between text-sm">
+                  <span className="text-amber-600 dark:text-amber-400">
+                    {t(`lottery.prize.${win.prize}`)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {formatDateTime(win.wonAt, lang)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       )}
     </div>

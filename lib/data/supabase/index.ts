@@ -3,6 +3,7 @@ import type {
   AppNotification,
   Comment,
   Language,
+  LotteryWin,
   Nationality,
   Poll,
   PollResult,
@@ -50,12 +51,14 @@ interface DBPollOption {
   poll_id: string;
   label: string;
   position: number;
+  label_translations?: Record<string, string>;
 }
 
 interface DBPoll {
   id: string;
   post_id: string;
   question: string;
+  question_translations?: Record<string, string>;
   multi_select: boolean;
   closes_at: string | null;
   poll_options?: DBPollOption[];
@@ -96,6 +99,13 @@ interface DBNotification {
   payload: Record<string, string>;
   read: boolean;
   created_at: string;
+}
+
+interface DBLotteryWin {
+  id: string;
+  user_id: string;
+  won_at: string;
+  prize: string;
 }
 
 interface DBPollResultRow {
@@ -143,12 +153,18 @@ function mapPoll(row: DBPoll): Poll {
     id: row.id,
     postId: row.post_id,
     question: row.question,
+    questionTranslations: (row.question_translations ?? {}) as Partial<Record<Language, string>>,
     multiSelect: row.multi_select,
     closesAt: row.closes_at,
     options: (row.poll_options ?? [])
       .slice()
       .sort((a, b) => a.position - b.position)
-      .map((o) => ({ id: o.id, label: o.label, position: o.position })),
+      .map((o) => ({
+        id: o.id,
+        label: o.label,
+        position: o.position,
+        labelTranslations: (o.label_translations ?? {}) as Partial<Record<Language, string>>,
+      })),
   };
 }
 
@@ -159,8 +175,14 @@ function emptyByNationality(): Record<Nationality, number> {
   );
 }
 
-function throwIfError(error: { message: string } | null, ctx: string): void {
-  if (error) throw new Error(`[Supabase:${ctx}] ${error.message}`);
+function throwIfError(
+  error: { message: string; code?: string; details?: string | null; hint?: string | null } | null,
+  ctx: string
+): void {
+  if (error) {
+    console.error(`[Supabase:${ctx}]`, { message: error.message, code: error.code, details: error.details, hint: error.hint });
+    throw new Error(`[Supabase:${ctx}] ${error.message}${error.code ? ` (code: ${error.code})` : ""}`);
+  }
 }
 
 // ---------- repository ----------
@@ -192,9 +214,7 @@ export class SupabaseRepository implements DataRepository {
     input: Omit<User, "id" | "createdAt" | "isAdmin">
   ): Promise<User> {
     const existing = await this.findUserByStudentId(input.studentId);
-    if (existing) {
-      throw new Error(`A user with student id ${input.studentId} already exists`);
-    }
+    if (existing) return existing;
     const { data, error } = await supabase
       .from("users")
       .insert({
@@ -284,6 +304,7 @@ export class SupabaseRepository implements DataRepository {
       .insert({
         post_id: input.postId,
         question: input.question,
+        question_translations: input.questionTranslations ?? {},
         multi_select: input.multiSelect,
         closes_at: input.closesAt,
       })
@@ -299,6 +320,7 @@ export class SupabaseRepository implements DataRepository {
           id: o.id,
           poll_id: dbPoll.id,
           label: o.label,
+          label_translations: o.labelTranslations ?? {},
           position: o.position,
         }))
       );
@@ -307,7 +329,11 @@ export class SupabaseRepository implements DataRepository {
 
     return mapPoll({
       ...dbPoll,
-      poll_options: input.options.map((o) => ({ ...o, poll_id: dbPoll.id })),
+      poll_options: input.options.map((o) => ({
+        ...o,
+        poll_id: dbPoll.id,
+        label_translations: o.labelTranslations ?? {},
+      })),
     });
   }
 
@@ -599,5 +625,33 @@ export class SupabaseRepository implements DataRepository {
       .eq("user_id", userId)
       .eq("read", false);
     throwIfError(error, "markAllRead");
+  }
+
+  // ---- lottery ----
+
+  async addLotteryWin(studentId: string): Promise<LotteryWin> {
+    const { data, error } = await supabase
+      .from("lottery_wins")
+      .insert({ user_id: studentId })
+      .select()
+      .single();
+    throwIfError(error, "addLotteryWin");
+    const row = data as DBLotteryWin;
+    return { id: row.id, studentId: row.user_id, wonAt: row.won_at, prize: row.prize };
+  }
+
+  async getLotteryWins(studentId: string): Promise<LotteryWin[]> {
+    const { data, error } = await supabase
+      .from("lottery_wins")
+      .select("*")
+      .eq("user_id", studentId)
+      .order("won_at", { ascending: false });
+    throwIfError(error, "getLotteryWins");
+    return (data ?? []).map((row: DBLotteryWin) => ({
+      id: row.id,
+      studentId: row.user_id,
+      wonAt: row.won_at,
+      prize: row.prize,
+    }));
   }
 }

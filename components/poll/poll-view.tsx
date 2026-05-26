@@ -13,6 +13,14 @@ import { formatDate } from "@/lib/format";
 import { NATIONALITY_COLOR } from "@/lib/nationality";
 import { TranslatedText } from "@/components/translated-text";
 import { Button } from "@/components/ui/button";
+
+function tr(
+  translations: Partial<Record<string, string>> | undefined,
+  original: string,
+  lang: string
+): string {
+  return translations?.[lang] ?? original;
+}
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -86,16 +94,19 @@ export function PollView({ poll }: PollViewProps) {
 
   const showResults = voted || isClosed;
 
-  // Build a label lookup from poll options for the admin voter table.
-  const optionLabel = Object.fromEntries(
-    poll.options.map((o) => [o.id, o.label])
+  // Build a label lookup (original + translations) from poll options.
+  const optionLabelMap = Object.fromEntries(
+    poll.options.map((o) => [
+      o.id,
+      { original: o.label, translations: o.labelTranslations },
+    ])
   );
 
   return (
     <Card className="gap-4 p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-semibold">
-          <TranslatedText text={poll.question} />
+          {tr(poll.questionTranslations, poll.question, lang)}
         </h2>
         {isClosed && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -117,7 +128,7 @@ export function PollView({ poll }: PollViewProps) {
               <div key={result.optionId} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">
-                    <TranslatedText text={result.label} />
+                    {tr(optionLabelMap[result.optionId]?.translations, result.label, lang)}
                   </span>
                   <span className="text-muted-foreground">
                     {result.total} {t("common.people")}
@@ -179,7 +190,7 @@ export function PollView({ poll }: PollViewProps) {
                     >
                       {active && <Check className="size-3" />}
                     </span>
-                    <TranslatedText text={option.label} />
+                    {tr(option.labelTranslations, option.label, lang)}
                   </button>
                 );
               })}
@@ -233,7 +244,11 @@ export function PollView({ poll }: PollViewProps) {
                         </span>
                       </td>
                       <td className="py-1">
-                        <TranslatedText text={optionLabel[v.optionId] ?? v.optionId} />
+                        {tr(
+                        optionLabelMap[v.optionId]?.translations,
+                        optionLabelMap[v.optionId]?.original ?? v.optionId,
+                        lang
+                      )}
                       </td>
                     </tr>
                   ))}

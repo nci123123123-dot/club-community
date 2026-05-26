@@ -2,6 +2,7 @@ import type { DataRepository, Voter } from "../repository";
 import type {
   AppNotification,
   Comment,
+  LotteryWin,
   Nationality,
   Poll,
   PollResult,
@@ -22,6 +23,7 @@ const KEY = {
   schedules: "cc.schedules",
   comments: "cc.comments",
   notifications: "cc.notifications",
+  lotteryWins: "cc.lotteryWins",
 } as const;
 
 function emptyByNationality(): Record<Nationality, number> {
@@ -54,9 +56,7 @@ export class MockRepository implements DataRepository {
     input: Omit<User, "id" | "createdAt" | "isAdmin">
   ): Promise<User> {
     const existing = await this.findUserByStudentId(input.studentId);
-    if (existing) {
-      throw new Error(`A user with student id ${input.studentId} already exists`);
-    }
+    if (existing) return existing;
     const user: User = {
       ...input,
       id: uid(),
@@ -272,5 +272,25 @@ export class MockRepository implements DataRepository {
         n.userId === userId ? { ...n, read: true } : n
       )
     );
+  }
+
+  // ---- lottery ----
+  async addLotteryWin(studentId: string): Promise<LotteryWin> {
+    const win: LotteryWin = {
+      id: uid(),
+      studentId,
+      wonAt: nowIso(),
+      prize: "coffee_gift_card",
+    };
+    const wins = read<LotteryWin[]>(KEY.lotteryWins, []);
+    write(KEY.lotteryWins, [...wins, win]);
+    return win;
+  }
+
+  async getLotteryWins(studentId: string): Promise<LotteryWin[]> {
+    const wins = read<LotteryWin[]>(KEY.lotteryWins, []);
+    return wins
+      .filter((w) => w.studentId === studentId)
+      .sort((a, b) => b.wonAt.localeCompare(a.wonAt));
   }
 }

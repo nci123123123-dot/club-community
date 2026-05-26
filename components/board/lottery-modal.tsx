@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { getRepository } from "@/lib/data";
 import { useT } from "@/lib/i18n/provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface LotteryModalProps {
   onClose: () => void;
+  studentId: string;
 }
 
 // 4 alternating sectors: WIN(0-90), LOSE(90-180), WIN(180-270), LOSE(270-360)
@@ -70,11 +72,17 @@ function WheelSVG() {
   );
 }
 
-export function LotteryModal({ onClose }: LotteryModalProps) {
+export function LotteryModal({ onClose, studentId }: LotteryModalProps) {
   const { t } = useT();
   const [phase, setPhase] = useState<"spinning" | "result">("spinning");
   const [won, setWon] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (phase === "result" && won) {
+      void getRepository().addLotteryWin(studentId).catch(() => undefined);
+    }
+  }, [phase, won, studentId]);
 
   useEffect(() => {
     const isWin = Math.random() < 0.5;
@@ -100,8 +108,16 @@ export function LotteryModal({ onClose }: LotteryModalProps) {
     const totalDeg = fullSpins * 360 + landOffset;
 
     if (wheelRef.current) {
-      wheelRef.current.style.transition = `transform 3.5s cubic-bezier(0.15, 0.85, 0.25, 1)`;
-      wheelRef.current.style.transform = `rotate(${totalDeg}deg)`;
+      const el = wheelRef.current;
+      // Reset to a known starting state with no transition
+      el.style.transition = "none";
+      el.style.transform = "rotate(0deg)";
+      // Force a style recalculation so the browser commits the "from" state
+      // before the animated transition is applied. Without this flush, the
+      // browser batches both changes into one style update and skips animation.
+      void el.offsetWidth;
+      el.style.transition = `transform 3.5s cubic-bezier(0.15, 0.85, 0.25, 1)`;
+      el.style.transform = `rotate(${totalDeg}deg)`;
     }
 
     const timer = setTimeout(() => setPhase("result"), 3800);

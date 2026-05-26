@@ -73,9 +73,16 @@ async function translateWithOpenAI(
         {
           role: "system",
           content:
-            `Translate each string in the user's JSON array from ${LANG_NAME[from]} ` +
-            `to ${LANG_NAME[to]}. Preserve meaning and tone. Return ONLY a JSON ` +
-            `array of translated strings in the same order and length.`,
+            `You are a professional translator specializing in Korean internet slang and informal language. ` +
+            `Korean text may contain abbreviated consonants (초성) like ㄱㄱ (고고/let's go), ㄷㄷ (덜덜/shaking with fear), ` +
+            `ㅋㅋ (laughing), ㄷㅊ (닥쳐/shut up), ㅇㅇ (응응/yes), ㄴㄴ (노노/no), ㅂㅂ (바이바이/bye), ` +
+            `ㅈㅅ (죄송/sorry), ㄳ (감사/thanks), ㅎㅎ (하하/haha), ㅠㅠ (crying), ` +
+            `and other Korean internet abbreviations. ` +
+            `First interpret the full meaning of the source text including any slang or abbreviations, ` +
+            `then translate naturally into ${LANG_NAME[to]}. ` +
+            `Do NOT transliterate Korean consonants — translate their meaning. ` +
+            `Translate each string in the user's JSON array from ${LANG_NAME[from]} to ${LANG_NAME[to]}. ` +
+            `Preserve meaning and tone. Return ONLY a JSON array of translated strings in the same order and length.`,
         },
         { role: "user", content: JSON.stringify(texts) },
       ],

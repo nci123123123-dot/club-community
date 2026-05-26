@@ -36,12 +36,14 @@ export interface PollOption {
   id: string;
   label: string;
   position: number;
+  labelTranslations?: Partial<Record<Language, string>>;
 }
 
 export interface Poll {
   id: string;
   postId: string;
   question: string;
+  questionTranslations?: Partial<Record<Language, string>>;
   multiSelect: boolean;
   closesAt: string | null;
   options: PollOption[];
@@ -80,6 +82,13 @@ export interface Comment {
   authorNationality: Nationality;
   content: string;
   createdAt: string;
+}
+
+export interface LotteryWin {
+  id: string;
+  studentId: string;
+  wonAt: string;
+  prize: string;
 }
 
 export type NotificationType =

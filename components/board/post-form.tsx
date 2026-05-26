@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getRepository } from "@/lib/data";
 import { detectLanguage } from "@/lib/translate";
-import { autoTranslatePost } from "@/lib/translate-client";
+import { autoTranslatePost, autoTranslatePoll } from "@/lib/translate-client";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { PollBuilder, emptyPollDraft, type PollDraft } from "@/components/poll/poll-builder";
@@ -46,7 +46,11 @@ export function PostForm() {
   }
 
   async function submit() {
-    if (!user) return;
+    if (!user) {
+      toast.error(t("inapp.loginRequired"));
+      router.replace("/onboarding");
+      return;
+    }
     if (!title.trim() || !content.trim()) {
       toast.error(t("onboarding.nameRequired"));
       return;
@@ -80,9 +84,13 @@ export function PostForm() {
       });
 
       if (pollEnabled) {
+        const { questionTranslations, optionTranslations } =
+          await autoTranslatePoll(poll.question.trim(), cleanOptions, originalLanguage);
+
         await repo.createPoll({
           postId: post.id,
           question: poll.question.trim(),
+          questionTranslations,
           multiSelect: poll.multiSelect,
           closesAt: poll.closesAt
             ? new Date(`${poll.closesAt}T23:59:59`).toISOString()
@@ -91,6 +99,7 @@ export function PostForm() {
             id: newId(),
             label,
             position,
+            labelTranslations: optionTranslations[position],
           })),
         });
         await repo.createNotification({
@@ -123,15 +132,18 @@ export function PostForm() {
       } else {
         router.replace(`/board/${post.id}`);
       }
-    } catch {
-      toast.error(t("onboarding.duplicateError"));
+    } catch (err) {
+      console.error("[PostForm] submit failed:", err);
+      toast.error(t("board.submitError"));
       setSubmitting(false);
     }
   }
 
   return (
     <>
-      {lotteryPostId && <LotteryModal onClose={handleLotteryClose} />}
+      {lotteryPostId && user && (
+        <LotteryModal onClose={handleLotteryClose} studentId={user.studentId} />
+      )}
 
       <div className="space-y-5">
         <h1 className="text-2xl font-bold tracking-tight">{t("board.newPost")}</h1>

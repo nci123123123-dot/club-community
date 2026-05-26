@@ -6,7 +6,7 @@ import { LANGUAGES } from "./data/types";
  * mock layer; a real implementation would call a detection API.
  */
 export function detectLanguage(text: string): Language {
-  if (/[가-힣]/.test(text)) return "ko";
+  if (/[가-힣ㄱ-ㅣ]/.test(text)) return "ko";
   if (/[぀-ゟ゠-ヿ]/.test(text)) return "ja";
   if (
     /[ăâđêôơưĂÂĐÊÔƠƯạảấầẩẫậắằẳẵặẹẻẽếềểễệìỉĩịọỏốồổỗộớờởỡợùủũụứừửữựỳỵỷỹ]/i.test(

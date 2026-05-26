@@ -1,6 +1,7 @@
 import type {
   AppNotification,
   Comment,
+  LotteryWin,
   Nationality,
   Poll,
   PollResult,
@@ -63,4 +64,8 @@ export interface DataRepository {
     input: Omit<AppNotification, "id" | "createdAt" | "read">
   ): Promise<AppNotification>;
   markAllRead(userId: string): Promise<void>;
+
+  // lottery
+  addLotteryWin(studentId: string): Promise<LotteryWin>;
+  getLotteryWins(studentId: string): Promise<LotteryWin[]>;
 }
