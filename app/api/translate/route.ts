@@ -43,9 +43,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const translated = process.env.OPENAI_API_KEY
-      ? await translateWithOpenAI(texts, from, to)
-      : await translateWithGoogle(texts, from, to);
+    let translated: string[];
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        translated = await translateWithOpenAI(texts, from, to);
+      } catch (openaiErr) {
+        console.error("[translate] OpenAI failed, falling back to Google:", openaiErr instanceof Error ? openaiErr.message : openaiErr);
+        translated = await translateWithGoogle(texts, from, to);
+      }
+    } else {
+      translated = await translateWithGoogle(texts, from, to);
+    }
     return NextResponse.json({ texts: translated });
   } catch (error) {
     console.error("Translation failed:", error);
