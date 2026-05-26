@@ -88,10 +88,15 @@ async function translateWithOpenAI(
       ],
     }),
   });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "(unreadable)");
+    console.error(`[translate] OpenAI error ${res.status}:`, errBody);
+    throw new Error(`OpenAI ${res.status}: ${errBody.slice(0, 200)}`);
+  }
   const data = await res.json();
   const content: string = data.choices?.[0]?.message?.content ?? "[]";
-  const parsed = JSON.parse(content.replace(/^```json\s*|\s*```$/g, ""));
+  console.log("[translate] OpenAI raw content:", content.slice(0, 300));
+  const parsed = JSON.parse(content.replace(/^```json\s*|\s*```$/g, "").trim());
   if (!Array.isArray(parsed) || parsed.length !== texts.length) {
     throw new Error("Unexpected OpenAI response shape");
   }
