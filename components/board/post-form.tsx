@@ -10,6 +10,7 @@ import { autoTranslatePost } from "@/lib/translate-client";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { PollBuilder, emptyPollDraft, type PollDraft } from "@/components/poll/poll-builder";
+import { LotteryModal } from "@/components/board/lottery-modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,13 @@ export function PostForm() {
   const [scheduleDate, setScheduleDate] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [lotteryPostId, setLotteryPostId] = useState<string | null>(null);
+
+  function handleLotteryClose() {
+    const id = lotteryPostId;
+    setLotteryPostId(null);
+    if (id) router.replace(`/board/${id}`);
+  }
 
   async function submit() {
     if (!user) return;
@@ -108,7 +116,13 @@ export function PostForm() {
         });
       }
 
-      router.replace(`/board/${post.id}`);
+      // Show lottery roulette for foreign (non-KR) users; navigate after they close it.
+      if (user.nationality !== "KR") {
+        setLotteryPostId(post.id);
+        setSubmitting(false);
+      } else {
+        router.replace(`/board/${post.id}`);
+      }
     } catch {
       toast.error(t("onboarding.duplicateError"));
       setSubmitting(false);
@@ -116,74 +130,78 @@ export function PostForm() {
   }
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">{t("board.newPost")}</h1>
+    <>
+      {lotteryPostId && <LotteryModal onClose={handleLotteryClose} />}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="title">{t("board.titleLabel")}</Label>
-        <Input
-          id="title"
-          value={title}
-          placeholder={t("board.titlePlaceholder")}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
+      <div className="space-y-5">
+        <h1 className="text-2xl font-bold tracking-tight">{t("board.newPost")}</h1>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="content">{t("board.contentLabel")}</Label>
-        <Textarea
-          id="content"
-          value={content}
-          rows={6}
-          placeholder={t("board.contentPlaceholder")}
-          onChange={(e) => setContent(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="tags">{t("board.tagsLabel")}</Label>
-        <Input
-          id="tags"
-          value={tagsInput}
-          placeholder={t("board.tagsPlaceholder")}
-          onChange={(e) => setTagsInput(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-3 rounded-xl border p-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enable-poll">{t("poll.add")}</Label>
-          <Switch
-            id="enable-poll"
-            checked={pollEnabled}
-            onCheckedChange={setPollEnabled}
-          />
-        </div>
-        {pollEnabled && <PollBuilder value={poll} onChange={setPoll} />}
-      </div>
-
-      <div className="space-y-3 rounded-xl border p-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enable-schedule">{t("schedule.linkToCalendar")}</Label>
-          <Switch
-            id="enable-schedule"
-            checked={scheduleEnabled}
-            onCheckedChange={setScheduleEnabled}
-          />
-        </div>
-        {scheduleEnabled && (
+        <div className="space-y-1.5">
+          <Label htmlFor="title">{t("board.titleLabel")}</Label>
           <Input
-            type="date"
-            value={scheduleDate}
-            onChange={(e) => setScheduleDate(e.target.value)}
+            id="title"
+            value={title}
+            placeholder={t("board.titlePlaceholder")}
+            onChange={(e) => setTitle(e.target.value)}
           />
-        )}
-      </div>
+        </div>
 
-      <Button className="w-full" onClick={submit} disabled={submitting}>
-        {submitting && <Loader2 className="size-4 animate-spin" />}
-        {t("board.publish")}
-      </Button>
-    </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="content">{t("board.contentLabel")}</Label>
+          <Textarea
+            id="content"
+            value={content}
+            rows={6}
+            placeholder={t("board.contentPlaceholder")}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="tags">{t("board.tagsLabel")}</Label>
+          <Input
+            id="tags"
+            value={tagsInput}
+            placeholder={t("board.tagsPlaceholder")}
+            onChange={(e) => setTagsInput(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-3 rounded-xl border p-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-poll">{t("poll.add")}</Label>
+            <Switch
+              id="enable-poll"
+              checked={pollEnabled}
+              onCheckedChange={setPollEnabled}
+            />
+          </div>
+          {pollEnabled && <PollBuilder value={poll} onChange={setPoll} />}
+        </div>
+
+        <div className="space-y-3 rounded-xl border p-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-schedule">{t("schedule.linkToCalendar")}</Label>
+            <Switch
+              id="enable-schedule"
+              checked={scheduleEnabled}
+              onCheckedChange={setScheduleEnabled}
+            />
+          </div>
+          {scheduleEnabled && (
+            <Input
+              type="date"
+              value={scheduleDate}
+              onChange={(e) => setScheduleDate(e.target.value)}
+            />
+          )}
+        </div>
+
+        <Button className="w-full" onClick={submit} disabled={submitting}>
+          {submitting && <Loader2 className="size-4 animate-spin" />}
+          {t("board.publish")}
+        </Button>
+      </div>
+    </>
   );
 }

@@ -131,6 +131,10 @@ const ko: Dictionary = {
   "lang.zh": "중국어",
   "lang.vi": "베트남어",
   "lang.en": "영어",
+  "lottery.title": "행운의 룰렛",
+  "lottery.spinning": "두근두근...",
+  "lottery.win": "커피 기프티콘 당첨! 🎉",
+  "lottery.lose": "아쉽네요, 다음 기회에! ☕",
 };
 
 const ja: Dictionary = {
@@ -262,6 +266,10 @@ const ja: Dictionary = {
   "lang.zh": "中国語",
   "lang.vi": "ベトナム語",
   "lang.en": "英語",
+  "lottery.title": "ラッキールーレット",
+  "lottery.spinning": "ドキドキ...",
+  "lottery.win": "コーヒーギフト当選！🎉",
+  "lottery.lose": "残念、次回また！☕",
 };
 
 const zh: Dictionary = {
@@ -393,6 +401,10 @@ const zh: Dictionary = {
   "lang.zh": "中文",
   "lang.vi": "越南语",
   "lang.en": "英语",
+  "lottery.title": "幸运转盘",
+  "lottery.spinning": "转动中...",
+  "lottery.win": "获得咖啡礼品卡！🎉",
+  "lottery.lose": "很遗憾，下次再来！☕",
 };
 
 const vi: Dictionary = {
@@ -524,6 +536,10 @@ const vi: Dictionary = {
   "lang.zh": "Tiếng Trung",
   "lang.vi": "Tiếng Việt",
   "lang.en": "Tiếng Anh",
+  "lottery.title": "Vòng quay may mắn",
+  "lottery.spinning": "Đang quay...",
+  "lottery.win": "Trúng voucher cà phê! 🎉",
+  "lottery.lose": "Chúc may mắn lần sau! ☕",
 };
 
 const en: Dictionary = {
@@ -655,6 +671,10 @@ const en: Dictionary = {
   "lang.zh": "Chinese",
   "lang.vi": "Vietnamese",
   "lang.en": "English",
+  "lottery.title": "Lucky Roulette",
+  "lottery.spinning": "Spinning...",
+  "lottery.win": "Coffee Gift Card! 🎉",
+  "lottery.lose": "Better luck next time! ☕",
 };
 
 export const dictionaries: Record<Language, Dictionary> = { ko, ja, zh, vi, en };
