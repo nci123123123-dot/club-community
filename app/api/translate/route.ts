@@ -111,6 +111,24 @@ async function translateWithOpenAI(
   return parsed.map(String);
 }
 
+// ---- Korean jamo (초성) preprocessor ----
+// Expands common Korean internet abbreviations so Google Translate can understand them.
+
+function expandKoreanJamo(text: string): string {
+  return text
+    .replace(/ㄱㄱ+/g, "고고")
+    .replace(/ㄷㄷ+/g, "덜덜")
+    .replace(/ㅋ{2,}/g, "크크크")
+    .replace(/ㅎ{2,}/g, "하하하")
+    .replace(/ㅠ{2,}|ㅜ{2,}/g, "흑흑")
+    .replace(/ㅇㅇ/g, "응응")
+    .replace(/ㄴㄴ/g, "노노")
+    .replace(/ㅂㅂ/g, "바이바이")
+    .replace(/ㄹㅇ/g, "리얼")
+    .replace(/ㅈㅅ/g, "죄송해요")
+    .replace(/ㄳ/g, "감사해요");
+}
+
 // ---- Google translate provider (free, no API key required) ----
 
 const GOOGLE_MAX = 1500;
@@ -163,5 +181,6 @@ async function translateWithGoogle(
   from: Language,
   to: Language
 ): Promise<string[]> {
-  return Promise.all(texts.map((text) => googleOne(text, from, to)));
+  const processed = from === "ko" ? texts.map(expandKoreanJamo) : texts;
+  return Promise.all(processed.map((text) => googleOne(text, from, to)));
 }
