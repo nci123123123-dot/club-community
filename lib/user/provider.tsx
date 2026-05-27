@@ -15,6 +15,16 @@ import { seedRepository, seedUserNotifications } from "../data/seed";
 
 const COOKIE_NAME = "cc.user";
 const COOKIE_DAYS = 30;
+const DB_TIMEOUT_MS = 5_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("db_timeout")), ms)
+    ),
+  ]);
+}
 
 function setCookie(name: string, value: string, days: number): void {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -81,31 +91,34 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
 
       // Re-verify against DB so we always have the current UUID.
-      // This fixes stale sessions (e.g. mock UUID that no longer exists in DB).
+      // Wrapped in withTimeout so a paused/unreachable Supabase instance never
+      // blocks the bootstrap indefinitely — we fall back to the cached session.
       if (stored) {
         try {
-          const fresh = await repo.findUserByStudentId(stored.studentId);
+          const fresh = await withTimeout(
+            repo.findUserByStudentId(stored.studentId),
+            DB_TIMEOUT_MS
+          );
           if (fresh) {
-            // Replace cached data with fresh DB row (id, isAdmin, etc. may differ).
             stored = fresh;
             setCookie(COOKIE_NAME, JSON.stringify(fresh), COOKIE_DAYS);
           } else {
-            // Student ID not in DB — clear stale session.
             stored = null;
             removeCookie(COOKIE_NAME);
           }
         } catch {
-          // DB unreachable — proceed with cached session as fallback.
+          // DB unreachable or timed out — proceed with cached session.
         }
       }
 
       if (stored) {
         try {
-          await seedUserNotifications(repo, stored.id);
+          await withTimeout(seedUserNotifications(repo, stored.id), DB_TIMEOUT_MS);
         } catch {
-          // Non-fatal: starter notifications are optional.
+          // Non-fatal.
         }
       }
+
       if (active) {
         setUserState(stored);
         setReady(true);
