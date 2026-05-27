@@ -83,6 +83,19 @@ export function PostForm() {
         translations,
       });
 
+      // fire-and-forget: notify admin of new post
+      void fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post.id,
+          title: title.trim(),
+          authorName: user.displayName,
+          nationality: user.nationality,
+          contentPreview: content.trim(),
+        }),
+      });
+
       if (pollEnabled) {
         const { questionTranslations, optionTranslations } =
           await autoTranslatePoll(poll.question.trim(), cleanOptions, originalLanguage);
