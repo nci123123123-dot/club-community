@@ -250,6 +250,10 @@ export class MockRepository implements DataRepository {
     return comment;
   }
 
+  async deleteComment(id: string): Promise<void> {
+    write(KEY.comments, read<Comment[]>(KEY.comments, []).filter((c) => c.id !== id));
+  }
+
   // ---- notifications ----
   async listNotifications(userId: string): Promise<AppNotification[]> {
     const notifications = read<AppNotification[]>(KEY.notifications, []);

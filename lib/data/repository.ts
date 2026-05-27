@@ -58,6 +58,7 @@ export interface DataRepository {
   createComment(
     input: Omit<Comment, "id" | "createdAt">
   ): Promise<Comment>;
+  deleteComment(id: string): Promise<void>;
 
   // notifications
   listNotifications(userId: string): Promise<AppNotification[]>;

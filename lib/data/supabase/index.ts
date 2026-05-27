@@ -87,6 +87,8 @@ interface DBSchedule {
 interface DBComment {
   id: string;
   post_id: string;
+  author_id: string | null;
+  author_name: string | null;
   author_nationality: string;
   content: string;
   created_at: string;
@@ -552,6 +554,8 @@ export class SupabaseRepository implements DataRepository {
       (row: DBComment): Comment => ({
         id: row.id,
         postId: row.post_id,
+        authorId: row.author_id ?? undefined,
+        authorStudentId: row.author_name ?? undefined,
         authorNationality: row.author_nationality as Nationality,
         content: row.content,
         createdAt: row.created_at,
@@ -566,6 +570,8 @@ export class SupabaseRepository implements DataRepository {
       .from("comments")
       .insert({
         post_id: input.postId,
+        author_id: input.authorId ?? null,
+        author_name: input.authorStudentId ?? null,
         author_nationality: input.authorNationality,
         content: input.content,
       })
@@ -576,10 +582,20 @@ export class SupabaseRepository implements DataRepository {
     return {
       id: row.id,
       postId: row.post_id,
+      authorId: row.author_id ?? undefined,
+      authorStudentId: row.author_name ?? undefined,
       authorNationality: row.author_nationality as Nationality,
       content: row.content,
       createdAt: row.created_at,
     };
+  }
+
+  async deleteComment(id: string): Promise<void> {
+    const { error } = await supabase
+      .from("comments")
+      .delete()
+      .eq("id", id);
+    throwIfError(error, "deleteComment");
   }
 
   // ---- notifications ----

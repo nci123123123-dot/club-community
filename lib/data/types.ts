@@ -79,6 +79,8 @@ export interface Schedule {
 export interface Comment {
   id: string;
   postId: string;
+  authorId?: string;
+  authorStudentId?: string;
   authorNationality: Nationality;
   content: string;
   createdAt: string;
