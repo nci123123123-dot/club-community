@@ -39,6 +39,7 @@ export interface DataRepository {
   getPollByPostId(postId: string): Promise<Poll | null>;
   createPoll(input: Omit<Poll, "id">): Promise<Poll>;
   vote(pollId: string, optionIds: string[], voter: Voter): Promise<void>;
+  cancelVote(pollId: string, studentId: string): Promise<void>;
   hasVoted(pollId: string, studentId: string): Promise<boolean>;
   getPollResults(pollId: string): Promise<PollResult[]>;
   getPollTotalVoters(pollId: string): Promise<number>;

@@ -151,6 +151,14 @@ export class MockRepository implements DataRepository {
     write(KEY.votes, [...votes, ...newVotes]);
   }
 
+  async cancelVote(pollId: string, studentId: string): Promise<void> {
+    const votes = read<PollVote[]>(KEY.votes, []);
+    write(
+      KEY.votes,
+      votes.filter((v) => !(v.pollId === pollId && v.studentId === studentId))
+    );
+  }
+
   async getPollResults(pollId: string): Promise<PollResult[]> {
     const polls = read<Poll[]>(KEY.polls, []);
     const poll = polls.find((p) => p.id === pollId);

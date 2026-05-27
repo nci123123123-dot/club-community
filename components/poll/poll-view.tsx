@@ -92,6 +92,20 @@ export function PollView({ poll }: PollViewProps) {
     }
   }
 
+  async function cancelVote() {
+    if (!user) return;
+    setSubmitting(true);
+    try {
+      await getRepository().cancelVote(poll.id, user.studentId);
+      toast.success(t("poll.cancelSuccess"));
+      await refresh();
+    } catch {
+      toast.error(t("poll.alreadyVoted"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const showResults = voted || isClosed;
 
   // Build a label lookup (original + translations) from poll options.
@@ -163,6 +177,18 @@ export function PollView({ poll }: PollViewProps) {
           <p className="text-xs text-muted-foreground">
             {t("poll.totalVoters")}: {totalVoters} {t("common.people")}
           </p>
+          {voted && !isClosed && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={cancelVote}
+              disabled={submitting}
+            >
+              {submitting && <Loader2 className="size-4 animate-spin" />}
+              {t("poll.cancelVote")}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

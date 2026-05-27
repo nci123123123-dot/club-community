@@ -378,6 +378,15 @@ export class SupabaseRepository implements DataRepository {
     throwIfError(error, "vote:insert");
   }
 
+  async cancelVote(pollId: string, studentId: string): Promise<void> {
+    const { error } = await supabase
+      .from("poll_votes")
+      .delete()
+      .eq("poll_id", pollId)
+      .eq("student_id", studentId);
+    throwIfError(error, "cancelVote");
+  }
+
   async getPollResults(pollId: string): Promise<PollResult[]> {
     const [{ data: optData, error: optErr }, { data: viewData, error: viewErr }] =
       await Promise.all([
