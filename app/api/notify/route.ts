@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const ADMIN_EMAIL = "nci123123123@gmail.com";
+const ADMIN_EMAIL = "nci1234@naver.com";
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://club-community.vercel.app";
 
