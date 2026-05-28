@@ -78,7 +78,15 @@ export class MockRepository implements DataRepository {
   // ---- posts ----
   async listPosts(): Promise<Post[]> {
     const posts = read<Post[]>(KEY.posts, []);
-    return [...posts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const postLikes = read<MockLike[]>(KEY.postLikes, []);
+    const comments = read<Comment[]>(KEY.comments, []);
+    return [...posts]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((post) => ({
+        ...post,
+        likeCount: postLikes.filter((l) => l.targetId === post.id).length,
+        commentCount: comments.filter((c) => c.postId === post.id).length,
+      }));
   }
 
   async getPost(id: string, studentId?: string): Promise<Post | null> {

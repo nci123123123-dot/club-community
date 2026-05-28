@@ -30,6 +30,7 @@ export interface Post {
   tags: string[];
   translations: Translation[];
   likeCount?: number;
+  commentCount?: number;
   isLikedByMe?: boolean;
   createdAt: string;
 }

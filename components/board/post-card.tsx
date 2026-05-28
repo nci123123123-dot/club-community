@@ -39,7 +39,11 @@ export function PostCard({ post, hasPoll }: PostCardProps) {
               <TranslatedText text={tag} prefix="#" />
             </Badge>
           ))}
-          <span className="ml-auto">{formatDateTime(post.createdAt, lang)}</span>
+          <div className="ml-auto flex items-center gap-3">
+            <span>👍 {post.likeCount ?? 0}</span>
+            <span>💬 {post.commentCount ?? 0}</span>
+            <span>{formatDateTime(post.createdAt, lang)}</span>
+          </div>
         </div>
       </Card>
     </Link>

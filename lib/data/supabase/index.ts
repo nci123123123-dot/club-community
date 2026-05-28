@@ -261,7 +261,28 @@ export class SupabaseRepository implements DataRepository {
       .select("*, translations(*)")
       .order("created_at", { ascending: false });
     throwIfError(error, "listPosts");
-    return (data ?? []).map((row) => mapPost(row as DBPost));
+    if (!data?.length) return [];
+
+    const postIds = (data as DBPost[]).map((p) => p.id);
+    const [{ data: likesData }, { data: commentsData }] = await Promise.all([
+      supabase.from("post_likes").select("post_id").in("post_id", postIds),
+      supabase.from("comments").select("post_id").in("post_id", postIds),
+    ]);
+
+    const likeCountMap = new Map<string, number>();
+    for (const { post_id } of (likesData ?? []) as { post_id: string }[]) {
+      likeCountMap.set(post_id, (likeCountMap.get(post_id) ?? 0) + 1);
+    }
+    const commentCountMap = new Map<string, number>();
+    for (const { post_id } of (commentsData ?? []) as { post_id: string }[]) {
+      commentCountMap.set(post_id, (commentCountMap.get(post_id) ?? 0) + 1);
+    }
+
+    return (data as DBPost[]).map((row) => ({
+      ...mapPost(row),
+      likeCount: likeCountMap.get(row.id) ?? 0,
+      commentCount: commentCountMap.get(row.id) ?? 0,
+    }));
   }
 
   async getPost(id: string, studentId?: string): Promise<Post | null> {
