@@ -14,7 +14,8 @@ interface NotifyPayload {
 }
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY;
+  // Strip BOM (U+FEFF) that can sneak in when copy-pasting into Vercel env UI
+  const apiKey = (process.env.RESEND_API_KEY ?? "").replace(/^﻿/, "").trim();
   if (!apiKey) {
     return NextResponse.json({ skipped: true }, { status: 200 });
   }
