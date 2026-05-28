@@ -172,14 +172,16 @@ export function PostDetail({ postId }: PostDetailProps) {
           onClick={handleLike}
           disabled={!currentUser || likingPost}
           className={cn(
-            "inline-flex items-center gap-1.5 text-sm transition-colors",
+            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
             post.isLikedByMe
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground",
+              ? "border-primary/30 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary",
             (!currentUser || likingPost) && "cursor-default opacity-60"
           )}
         >
           <span>👍</span>
+          <span>{t("board.like")}</span>
+          <span className="opacity-40">·</span>
           <span>{post.likeCount ?? 0}</span>
         </button>
       </div>

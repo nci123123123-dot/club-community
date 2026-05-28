@@ -231,12 +231,16 @@ export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
                     onClick={() => toggleLike(comment.id)}
                     disabled={!user || likingId === comment.id}
                     className={cn(
-                      "inline-flex items-center gap-1 text-xs transition-colors",
-                      comment.isLikedByMe ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+                      comment.isLikedByMe
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary",
                       (!user || likingId === comment.id) && "cursor-default opacity-60"
                     )}
                   >
                     <span>👍</span>
+                    <span>{t("board.like")}</span>
+                    <span className="opacity-40">·</span>
                     <span>{comment.likeCount ?? 0}</span>
                   </button>
                   {user && (
@@ -298,12 +302,16 @@ export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
                             onClick={() => toggleLike(reply.id)}
                             disabled={!user || likingId === reply.id}
                             className={cn(
-                              "inline-flex items-center gap-1 text-xs transition-colors",
-                              reply.isLikedByMe ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+                              reply.isLikedByMe
+                                ? "border-primary/30 bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary",
                               (!user || likingId === reply.id) && "cursor-default opacity-60"
                             )}
                           >
                             <span>👍</span>
+                            <span>{t("board.like")}</span>
+                            <span className="opacity-40">·</span>
                             <span>{reply.likeCount ?? 0}</span>
                           </button>
                         </div>
