@@ -157,7 +157,7 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
                     style={{ width: `${Math.round(ratio * 100)}%` }}
                   />
                 </div>
-                {present.length > 0 && (
+                {(admin || isClosed) && present.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
                     {present.map((n: Nationality) => (
                       <span
