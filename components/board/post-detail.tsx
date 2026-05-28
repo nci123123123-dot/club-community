@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Languages, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, Languages, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { Poll, Post, User } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
@@ -17,6 +17,7 @@ import { NationalityBadge } from "@/components/nationality-badge";
 import { TranslatedText } from "@/components/translated-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface PostDetailProps {
   postId: string;
@@ -32,13 +33,14 @@ export function PostDetail({ postId }: PostDetailProps) {
   const [loading, setLoading] = useState(true);
   const [showOriginal, setShowOriginal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [likingPost, setLikingPost] = useState(false);
 
   useEffect(() => {
     let active = true;
     async function load() {
       const repo = getRepository();
       const [p, pl] = await Promise.all([
-        repo.getPost(postId),
+        repo.getPost(postId, currentUser?.studentId),
         repo.getPollByPostId(postId),
       ]);
       if (!active) return;
@@ -53,6 +55,17 @@ export function PostDetail({ postId }: PostDetailProps) {
     void load();
     return () => { active = false; };
   }, [postId, currentUser]);
+
+  async function handleLike() {
+    if (!currentUser || !post) return;
+    setLikingPost(true);
+    try {
+      const { liked, count } = await getRepository().togglePostLike(post.id, currentUser.studentId);
+      setPost((prev) => prev ? { ...prev, isLikedByMe: liked, likeCount: count } : prev);
+    } finally {
+      setLikingPost(false);
+    }
+  }
 
   async function handleDelete() {
     if (!post) return;
@@ -152,6 +165,24 @@ export function PostDetail({ postId }: PostDetailProps) {
       </header>
 
       <p className="whitespace-pre-wrap leading-relaxed">{tr.content}</p>
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleLike}
+          disabled={!currentUser || likingPost}
+          className={cn(
+            "inline-flex items-center gap-1.5 text-sm transition-colors",
+            post.isLikedByMe
+              ? "text-rose-500"
+              : "text-muted-foreground hover:text-rose-500",
+            (!currentUser || likingPost) && "cursor-default opacity-60"
+          )}
+        >
+          <Heart className={cn("size-4", post.isLikedByMe && "fill-current")} />
+          <span>{post.likeCount ?? 0}</span>
+        </button>
+      </div>
 
       {translatable && (
         <Button

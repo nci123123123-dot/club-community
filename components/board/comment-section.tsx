@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Trash2, CornerDownRight } from "lucide-react";
+import { CornerDownRight, Heart, Loader2, Trash2 } from "lucide-react";
 import type { Comment } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { useT } from "@/lib/i18n/provider";
@@ -27,12 +27,13 @@ export function CommentSection({ postId }: CommentSectionProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [likingId, setLikingId] = useState<string | null>(null);
 
   const admin = isAdmin(user);
 
   const load = useCallback(async () => {
-    setComments(await getRepository().listComments(postId));
-  }, [postId]);
+    setComments(await getRepository().listComments(postId, user?.studentId));
+  }, [postId, user?.studentId]);
 
   useEffect(() => {
     void load();
@@ -85,6 +86,27 @@ export function CommentSection({ postId }: CommentSectionProps) {
       await load();
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function applyLike(list: Comment[], id: string, liked: boolean, count: number): Comment[] {
+    return list.map((c) => {
+      if (c.id === id) return { ...c, isLikedByMe: liked, likeCount: count };
+      if (c.replies?.length) {
+        return { ...c, replies: c.replies.map((r) => r.id === id ? { ...r, isLikedByMe: liked, likeCount: count } : r) };
+      }
+      return c;
+    });
+  }
+
+  async function toggleLike(commentId: string) {
+    if (!user) return;
+    setLikingId(commentId);
+    try {
+      const { liked, count } = await getRepository().toggleCommentLike(commentId, user.studentId);
+      setComments((prev) => prev ? applyLike(prev, commentId, liked, count) : prev);
+    } finally {
+      setLikingId(null);
     }
   }
 
@@ -180,15 +202,30 @@ export function CommentSection({ postId }: CommentSectionProps) {
                 <p className="mt-1.5 text-sm leading-relaxed">
                   {comment.translations?.[lang] ?? comment.content}
                 </p>
-                {user && (
+                <div className="mt-2 flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => toggleReply(comment.id)}
-                    className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => toggleLike(comment.id)}
+                    disabled={!user || likingId === comment.id}
+                    className={cn(
+                      "inline-flex items-center gap-1 text-xs transition-colors",
+                      comment.isLikedByMe ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+                      (!user || likingId === comment.id) && "cursor-default opacity-60"
+                    )}
                   >
-                    {t("board.reply")}
+                    <Heart className={cn("size-3.5", comment.isLikedByMe && "fill-current")} />
+                    <span>{comment.likeCount ?? 0}</span>
                   </button>
-                )}
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => toggleReply(comment.id)}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {t("board.reply")}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Reply input */}
@@ -232,6 +269,21 @@ export function CommentSection({ postId }: CommentSectionProps) {
                         <p className="mt-1.5 text-sm leading-relaxed">
                           {reply.translations?.[lang] ?? reply.content}
                         </p>
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleLike(reply.id)}
+                            disabled={!user || likingId === reply.id}
+                            className={cn(
+                              "inline-flex items-center gap-1 text-xs transition-colors",
+                              reply.isLikedByMe ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+                              (!user || likingId === reply.id) && "cursor-default opacity-60"
+                            )}
+                          >
+                            <Heart className={cn("size-3.5", reply.isLikedByMe && "fill-current")} />
+                            <span>{reply.likeCount ?? 0}</span>
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
