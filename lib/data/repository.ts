@@ -56,7 +56,7 @@ export interface DataRepository {
   // comments
   listComments(postId: string): Promise<Comment[]>;
   createComment(
-    input: Omit<Comment, "id" | "createdAt">
+    input: Omit<Comment, "id" | "createdAt" | "replies">
   ): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
 

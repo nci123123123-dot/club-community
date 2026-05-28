@@ -88,12 +88,27 @@ interface DBSchedule {
 interface DBComment {
   id: string;
   post_id: string;
+  parent_id: string | null;
   author_id: string | null;
   author_name: string | null;
   author_nationality: string;
   content: string;
   translations: Record<string, string>;
   created_at: string;
+}
+
+function mapComment(row: DBComment): Comment {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    parentId: row.parent_id ?? undefined,
+    authorId: row.author_id ?? undefined,
+    authorStudentId: row.author_name ?? undefined,
+    authorNationality: row.author_nationality as Nationality,
+    content: row.content,
+    translations: row.translations ?? {},
+    createdAt: row.created_at,
+  };
 }
 
 interface DBNotification {
@@ -546,34 +561,46 @@ export class SupabaseRepository implements DataRepository {
   // ---- comments ----
 
   async listComments(postId: string): Promise<Comment[]> {
-    const { data, error } = await supabase
-      .from("comments")
-      .select("*")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
-    throwIfError(error, "listComments");
-    return (data ?? []).map(
-      (row: DBComment): Comment => ({
-        id: row.id,
-        postId: row.post_id,
-        authorId: row.author_id ?? undefined,
-        authorStudentId: row.author_name ?? undefined,
-        authorNationality: row.author_nationality as Nationality,
-        content: row.content,
-        translations: row.translations ?? {},
-        createdAt: row.created_at,
-      })
-    );
+    const [{ data: topData, error: topErr }, { data: replyData, error: replyErr }] =
+      await Promise.all([
+        supabase
+          .from("comments")
+          .select("*")
+          .eq("post_id", postId)
+          .is("parent_id", null)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("comments")
+          .select("*")
+          .eq("post_id", postId)
+          .not("parent_id", "is", null)
+          .order("created_at", { ascending: true }),
+      ]);
+    throwIfError(topErr, "listComments:top");
+    throwIfError(replyErr, "listComments:replies");
+
+    const replyMap = new Map<string, Comment[]>();
+    for (const row of (replyData ?? []) as DBComment[]) {
+      const pid = row.parent_id!;
+      if (!replyMap.has(pid)) replyMap.set(pid, []);
+      replyMap.get(pid)!.push(mapComment(row));
+    }
+
+    return (topData ?? []).map((row: DBComment) => ({
+      ...mapComment(row),
+      replies: replyMap.get(row.id) ?? [],
+    }));
   }
 
   async createComment(
-    input: Omit<Comment, "id" | "createdAt">
+    input: Omit<Comment, "id" | "createdAt" | "replies">
   ): Promise<Comment> {
     const translations = await autoTranslateComment(input.content);
     const { data, error } = await supabase
       .from("comments")
       .insert({
         post_id: input.postId,
+        parent_id: input.parentId ?? null,
         author_id: input.authorId ?? null,
         author_name: input.authorStudentId ?? null,
         author_nationality: input.authorNationality,
@@ -583,17 +610,7 @@ export class SupabaseRepository implements DataRepository {
       .select()
       .single();
     throwIfError(error, "createComment");
-    const row = data as DBComment;
-    return {
-      id: row.id,
-      postId: row.post_id,
-      authorId: row.author_id ?? undefined,
-      authorStudentId: row.author_name ?? undefined,
-      authorNationality: row.author_nationality as Nationality,
-      content: row.content,
-      translations: row.translations ?? {},
-      createdAt: row.created_at,
-    };
+    return mapComment(data as DBComment);
   }
 
   async deleteComment(id: string): Promise<void> {

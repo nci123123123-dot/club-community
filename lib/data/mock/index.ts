@@ -236,14 +236,24 @@ export class MockRepository implements DataRepository {
 
   // ---- comments ----
   async listComments(postId: string): Promise<Comment[]> {
-    const comments = read<Comment[]>(KEY.comments, []);
-    return comments
+    const all = read<Comment[]>(KEY.comments, [])
       .filter((c) => c.postId === postId)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+    const replyMap = new Map<string, Comment[]>();
+    for (const c of all.filter((c) => c.parentId)) {
+      const pid = c.parentId!;
+      if (!replyMap.has(pid)) replyMap.set(pid, []);
+      replyMap.get(pid)!.push(c);
+    }
+
+    return all
+      .filter((c) => !c.parentId)
+      .map((c) => ({ ...c, replies: replyMap.get(c.id) ?? [] }));
   }
 
   async createComment(
-    input: Omit<Comment, "id" | "createdAt">
+    input: Omit<Comment, "id" | "createdAt" | "replies">
   ): Promise<Comment> {
     const translations = await autoTranslateComment(input.content);
     const comment: Comment = { ...input, translations, id: uid(), createdAt: nowIso() };
@@ -253,7 +263,10 @@ export class MockRepository implements DataRepository {
   }
 
   async deleteComment(id: string): Promise<void> {
-    write(KEY.comments, read<Comment[]>(KEY.comments, []).filter((c) => c.id !== id));
+    write(
+      KEY.comments,
+      read<Comment[]>(KEY.comments, []).filter((c) => c.id !== id && c.parentId !== id)
+    );
   }
 
   // ---- notifications ----

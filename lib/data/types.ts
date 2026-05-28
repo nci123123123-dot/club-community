@@ -79,11 +79,13 @@ export interface Schedule {
 export interface Comment {
   id: string;
   postId: string;
+  parentId?: string;
   authorId?: string;
   authorStudentId?: string;
   authorNationality: Nationality;
   content: string;
   translations?: Partial<Record<Language, string>>;
+  replies?: Comment[];
   createdAt: string;
 }
 
