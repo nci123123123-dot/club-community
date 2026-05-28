@@ -26,9 +26,10 @@ import { cn } from "@/lib/utils";
 
 interface PollViewProps {
   poll: Poll;
+  postAuthorId?: string;
 }
 
-export function PollView({ poll }: PollViewProps) {
+export function PollView({ poll, postAuthorId }: PollViewProps) {
   const { t, lang } = useT();
   const { user } = useCurrentUser();
 
@@ -41,20 +42,22 @@ export function PollView({ poll }: PollViewProps) {
 
   const admin = isAdmin(user);
   const isClosed = !!poll.closesAt && new Date(poll.closesAt).getTime() < Date.now();
+  const isAuthor = !!user && !!postAuthorId && user.id === postAuthorId;
 
   const refresh = useCallback(async () => {
     const repo = getRepository();
+    const needVotes = admin || (isClosed && isAuthor);
     const [res, total, didVote, votes] = await Promise.all([
       repo.getPollResults(poll.id),
       repo.getPollTotalVoters(poll.id),
       user ? repo.hasVoted(poll.id, user.studentId) : Promise.resolve(false),
-      admin ? repo.getPollVotes(poll.id) : Promise.resolve([]),
+      needVotes ? repo.getPollVotes(poll.id) : Promise.resolve([]),
     ]);
     setResults(res);
     setTotalVoters(total);
     setVoted(didVote);
     setAllVotes(votes);
-  }, [poll.id, user, admin]);
+  }, [poll.id, user, admin, isClosed, isAuthor]);
 
   useEffect(() => {
     void refresh();
@@ -237,8 +240,8 @@ export function PollView({ poll }: PollViewProps) {
         </div>
       )}
 
-      {/* Admin-only voter list */}
-      {admin && (
+      {/* Voter list: admin always, post author after poll closes */}
+      {(admin || (isClosed && isAuthor)) && (
         <div className="border-t pt-4">
           <p className="mb-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
             {t("admin.voterList")}

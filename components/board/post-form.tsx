@@ -53,7 +53,7 @@ export function PostForm() {
       return;
     }
     const cleanOptions = poll.options.map((o) => o.trim()).filter(Boolean);
-    if (pollEnabled && (!poll.question.trim() || cleanOptions.length < 2)) {
+    if (pollEnabled && (!poll.question.trim() || cleanOptions.length < 2 || !poll.closesAt)) {
       toast.error(t("poll.selectOption"));
       return;
     }

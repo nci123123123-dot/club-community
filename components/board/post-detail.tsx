@@ -200,7 +200,7 @@ export function PostDetail({ postId }: PostDetailProps) {
         </Button>
       )}
 
-      {poll && <PollView poll={poll} />}
+      {poll && <PollView poll={poll} postAuthorId={post.authorId} />}
 
       <hr className="border-border" />
 
