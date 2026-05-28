@@ -33,9 +33,6 @@ export function PostForm() {
   const [pollEnabled, setPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollDraft>(emptyPollDraft);
 
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState("");
-
   const [submitting, setSubmitting] = useState(false);
   const [lotteryPostId, setLotteryPostId] = useState<string | null>(null);
 
@@ -122,22 +119,6 @@ export function PostForm() {
         });
       }
 
-      if (scheduleEnabled && scheduleDate) {
-        await repo.createSchedule({
-          title: title.trim(),
-          description: content.trim(),
-          startAt: new Date(`${scheduleDate}T10:00:00`).toISOString(),
-          endAt: null,
-          color: "var(--chart-1)",
-          postId: post.id,
-        });
-        await repo.createNotification({
-          userId: user.id,
-          type: "new_schedule",
-          payload: { title: title.trim() },
-        });
-      }
-
       // Show lottery roulette for foreign (non-KR) users; navigate after they close it.
       if (user.nationality !== "KR") {
         setLotteryPostId(post.id);
@@ -202,24 +183,6 @@ export function PostForm() {
             />
           </div>
           {pollEnabled && <PollBuilder value={poll} onChange={setPoll} />}
-        </div>
-
-        <div className="space-y-3 rounded-xl border p-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="enable-schedule">{t("schedule.linkToCalendar")}</Label>
-            <Switch
-              id="enable-schedule"
-              checked={scheduleEnabled}
-              onCheckedChange={setScheduleEnabled}
-            />
-          </div>
-          {scheduleEnabled && (
-            <Input
-              type="date"
-              value={scheduleDate}
-              onChange={(e) => setScheduleDate(e.target.value)}
-            />
-          )}
         </div>
 
         <Button className="w-full" onClick={submit} disabled={submitting}>
