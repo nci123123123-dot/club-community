@@ -137,7 +137,6 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
       ) : showResults ? (
         <div className="space-y-4">
           {results.map((result) => {
-            const ratio = totalVoters > 0 ? result.total / totalVoters : 0;
             const present = NATIONALITIES.filter(
               (n) => result.byNationality[n] > 0
             );
@@ -148,14 +147,8 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
                     {tr(optionLabelMap[result.optionId]?.translations, result.label, lang)}
                   </span>
                   <span className="text-muted-foreground">
-                    {result.total} {t("common.people")}
+                    {result.total}{t("common.people")}
                   </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.round(ratio * 100)}%` }}
-                  />
                 </div>
                 {(admin || isClosed) && present.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
