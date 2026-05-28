@@ -31,34 +31,37 @@ export async function POST(req: NextRequest) {
   const resend = new Resend(apiKey);
 
   const postUrl = `${SITE_URL}/board/${postId}`;
-  const preview =
-    contentPreview.length > 200
-      ? contentPreview.slice(0, 200) + "…"
-      : contentPreview;
+  const safePreview = (contentPreview ?? "").slice(0, 200);
 
-  const { error } = await resend.emails.send({
-    from: "onboarding@resend.dev",
-    to: ADMIN_EMAIL,
-    subject: `[동아리] 새 글: ${title}`,
-    html: `
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: ADMIN_EMAIL,
+      subject: `[동아리] 새 글: ${title}`,
+      html: `
 <div style="font-family:sans-serif;max-width:520px;color:#111">
   <h2 style="margin-bottom:4px">${escapeHtml(title)}</h2>
   <p style="margin:0 0 16px;color:#555;font-size:14px">
     작성자: <strong>${escapeHtml(authorName)}</strong> (${escapeHtml(nationality)})
   </p>
-  <div style="background:#f5f5f5;border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(preview)}</div>
+  <div style="background:#f5f5f5;border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap">${escapeHtml(safePreview)}</div>
   <a href="${postUrl}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#18181b;color:#fff;border-radius:8px;text-decoration:none;font-size:14px">
     글 보러 가기 →
   </a>
 </div>`,
-  });
+    });
 
-  if (error) {
-    console.error("[notify] Resend error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[notify] Resend error:", error);
+      return NextResponse.json({ error }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, id: data?.id });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[notify] Unexpected error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }
 
 function escapeHtml(str: string): string {
