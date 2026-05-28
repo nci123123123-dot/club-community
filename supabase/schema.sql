@@ -150,9 +150,10 @@ create policy polls_write on polls        for insert with check (true);
 create policy opt_read    on poll_options for select using (true);
 create policy opt_write   on poll_options for insert with check (true);
 
--- votes: cast + read (raw rows; admin voter list uses this)
+-- votes: cast + read + delete (delete needed for vote cancellation)
 create policy votes_insert on poll_votes for insert with check (true);
 create policy votes_select on poll_votes for select using (true);
+create policy votes_delete on poll_votes for delete using (true);
 
 -- schedules: full access
 create policy sch_read  on schedules for select using (true);
