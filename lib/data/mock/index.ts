@@ -14,6 +14,7 @@ import type {
 import { NATIONALITIES } from "../types";
 import { ADMIN_STUDENT_ID } from "../../admin";
 import { read, write, uid, nowIso } from "./store";
+import { autoTranslateComment } from "../../translate-client";
 
 const KEY = {
   users: "cc.users",
@@ -244,7 +245,8 @@ export class MockRepository implements DataRepository {
   async createComment(
     input: Omit<Comment, "id" | "createdAt">
   ): Promise<Comment> {
-    const comment: Comment = { ...input, id: uid(), createdAt: nowIso() };
+    const translations = await autoTranslateComment(input.content);
+    const comment: Comment = { ...input, translations, id: uid(), createdAt: nowIso() };
     const comments = read<Comment[]>(KEY.comments, []);
     write(KEY.comments, [...comments, comment]);
     return comment;

@@ -83,6 +83,7 @@ export interface Comment {
   authorStudentId?: string;
   authorNationality: Nationality;
   content: string;
+  translations?: Partial<Record<Language, string>>;
   createdAt: string;
 }
 

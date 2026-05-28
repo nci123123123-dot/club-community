@@ -1,6 +1,6 @@
 import type { Language, Translation } from "./data/types";
 import { LANGUAGES } from "./data/types";
-import { translate as mockTranslate } from "./translate";
+import { translate as mockTranslate, detectLanguage } from "./translate";
 
 export async function translateTexts(
   texts: string[],
@@ -103,4 +103,22 @@ export async function autoTranslatePoll(
   }
 
   return { questionTranslations, optionTranslations };
+}
+
+export async function autoTranslateComment(
+  content: string
+): Promise<Partial<Record<Language, string>>> {
+  const from = detectLanguage(content) as Language;
+  const result: Partial<Record<Language, string>> = { [from]: content };
+  await Promise.all(
+    LANGUAGES.filter((l) => l !== from).map(async (lang) => {
+      try {
+        const [translated] = await translateTexts([content], from, lang);
+        result[lang] = translated || content;
+      } catch {
+        result[lang] = content;
+      }
+    })
+  );
+  return result;
 }

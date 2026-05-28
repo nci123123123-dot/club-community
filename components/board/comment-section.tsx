@@ -140,7 +140,9 @@ export function CommentSection({ postId }: CommentSectionProps) {
                   </button>
                 )}
               </div>
-              <p className="text-sm leading-relaxed">{comment.content}</p>
+              <p className="text-sm leading-relaxed">
+                {comment.translations?.[lang] ?? comment.content}
+              </p>
             </li>
           ))}
         </ul>

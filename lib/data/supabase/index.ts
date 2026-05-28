@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { NATIONALITIES } from "../types";
 import { ADMIN_STUDENT_ID } from "../../admin";
+import { autoTranslateComment } from "../../translate-client";
 import { supabase } from "./client";
 
 // ---------- raw DB row shapes ----------
@@ -91,6 +92,7 @@ interface DBComment {
   author_name: string | null;
   author_nationality: string;
   content: string;
+  translations: Record<string, string>;
   created_at: string;
 }
 
@@ -558,6 +560,7 @@ export class SupabaseRepository implements DataRepository {
         authorStudentId: row.author_name ?? undefined,
         authorNationality: row.author_nationality as Nationality,
         content: row.content,
+        translations: row.translations ?? {},
         createdAt: row.created_at,
       })
     );
@@ -566,6 +569,7 @@ export class SupabaseRepository implements DataRepository {
   async createComment(
     input: Omit<Comment, "id" | "createdAt">
   ): Promise<Comment> {
+    const translations = await autoTranslateComment(input.content);
     const { data, error } = await supabase
       .from("comments")
       .insert({
@@ -574,6 +578,7 @@ export class SupabaseRepository implements DataRepository {
         author_name: input.authorStudentId ?? null,
         author_nationality: input.authorNationality,
         content: input.content,
+        translations,
       })
       .select()
       .single();
@@ -586,6 +591,7 @@ export class SupabaseRepository implements DataRepository {
       authorStudentId: row.author_name ?? undefined,
       authorNationality: row.author_nationality as Nationality,
       content: row.content,
+      translations: row.translations ?? {},
       createdAt: row.created_at,
     };
   }
