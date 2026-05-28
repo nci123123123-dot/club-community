@@ -29,6 +29,8 @@ export interface Post {
   originalLanguage: Language;
   tags: string[];
   translations: Translation[];
+  likeCount?: number;
+  isLikedByMe?: boolean;
   createdAt: string;
 }
 
@@ -85,6 +87,8 @@ export interface Comment {
   authorNationality: Nationality;
   content: string;
   translations?: Partial<Record<Language, string>>;
+  likeCount?: number;
+  isLikedByMe?: boolean;
   replies?: Comment[];
   createdAt: string;
 }
@@ -101,6 +105,19 @@ export type NotificationType =
   | "poll_closing"
   | "new_schedule"
   | "new_comment";
+
+export interface MyPostActivity {
+  post: Post;
+  commentCount: number;
+}
+
+export interface MyVoteActivity {
+  postId: string;
+  postTranslations: Translation[];
+  postOriginalLanguage: Language;
+  votedOptionLabels: string[];
+  votedAt: string;
+}
 
 export interface AppNotification {
   id: string;

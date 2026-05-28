@@ -3,6 +3,8 @@ import type {
   AppNotification,
   Comment,
   LotteryWin,
+  MyPostActivity,
+  MyVoteActivity,
   Nationality,
   Poll,
   PollResult,
@@ -25,7 +27,11 @@ const KEY = {
   comments: "cc.comments",
   notifications: "cc.notifications",
   lotteryWins: "cc.lotteryWins",
+  postLikes: "cc.postLikes",
+  commentLikes: "cc.commentLikes",
 } as const;
+
+interface MockLike { targetId: string; studentId: string; }
 
 function emptyByNationality(): Record<Nationality, number> {
   return NATIONALITIES.reduce(
@@ -75,9 +81,12 @@ export class MockRepository implements DataRepository {
     return [...posts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  async getPost(id: string): Promise<Post | null> {
+  async getPost(id: string, studentId?: string): Promise<Post | null> {
     const posts = read<Post[]>(KEY.posts, []);
-    return posts.find((p) => p.id === id) ?? null;
+    const post = posts.find((p) => p.id === id) ?? null;
+    if (!post) return null;
+    const likes = read<MockLike[]>(KEY.postLikes, []).filter((l) => l.targetId === id);
+    return { ...post, likeCount: likes.length, isLikedByMe: !!studentId && likes.some((l) => l.studentId === studentId) };
   }
 
   async createPost(input: Omit<Post, "id" | "createdAt">): Promise<Post> {
@@ -235,21 +244,27 @@ export class MockRepository implements DataRepository {
   }
 
   // ---- comments ----
-  async listComments(postId: string): Promise<Comment[]> {
+  async listComments(postId: string, studentId?: string): Promise<Comment[]> {
     const all = read<Comment[]>(KEY.comments, [])
       .filter((c) => c.postId === postId)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const clikes = read<MockLike[]>(KEY.commentLikes, []);
+
+    function enrichComment(c: Comment): Comment {
+      const likes = clikes.filter((l) => l.targetId === c.id);
+      return { ...c, likeCount: likes.length, isLikedByMe: !!studentId && likes.some((l) => l.studentId === studentId) };
+    }
 
     const replyMap = new Map<string, Comment[]>();
     for (const c of all.filter((c) => c.parentId)) {
       const pid = c.parentId!;
       if (!replyMap.has(pid)) replyMap.set(pid, []);
-      replyMap.get(pid)!.push(c);
+      replyMap.get(pid)!.push(enrichComment(c));
     }
 
     return all
       .filter((c) => !c.parentId)
-      .map((c) => ({ ...c, replies: replyMap.get(c.id) ?? [] }));
+      .map((c) => ({ ...enrichComment(c), replies: replyMap.get(c.id) ?? [] }));
   }
 
   async createComment(
@@ -263,10 +278,27 @@ export class MockRepository implements DataRepository {
   }
 
   async deleteComment(id: string): Promise<void> {
-    write(
-      KEY.comments,
-      read<Comment[]>(KEY.comments, []).filter((c) => c.id !== id && c.parentId !== id)
-    );
+    write(KEY.comments, read<Comment[]>(KEY.comments, []).filter((c) => c.id !== id && c.parentId !== id));
+  }
+
+  async togglePostLike(postId: string, studentId: string): Promise<{ liked: boolean; count: number }> {
+    const likes = read<MockLike[]>(KEY.postLikes, []);
+    const exists = likes.some((l) => l.targetId === postId && l.studentId === studentId);
+    const updated = exists
+      ? likes.filter((l) => !(l.targetId === postId && l.studentId === studentId))
+      : [...likes, { targetId: postId, studentId }];
+    write(KEY.postLikes, updated);
+    return { liked: !exists, count: updated.filter((l) => l.targetId === postId).length };
+  }
+
+  async toggleCommentLike(commentId: string, studentId: string): Promise<{ liked: boolean; count: number }> {
+    const likes = read<MockLike[]>(KEY.commentLikes, []);
+    const exists = likes.some((l) => l.targetId === commentId && l.studentId === studentId);
+    const updated = exists
+      ? likes.filter((l) => !(l.targetId === commentId && l.studentId === studentId))
+      : [...likes, { targetId: commentId, studentId }];
+    write(KEY.commentLikes, updated);
+    return { liked: !exists, count: updated.filter((l) => l.targetId === commentId).length };
   }
 
   // ---- notifications ----
@@ -319,5 +351,51 @@ export class MockRepository implements DataRepository {
     return wins
       .filter((w) => w.studentId === studentId)
       .sort((a, b) => b.wonAt.localeCompare(a.wonAt));
+  }
+
+  // ---- activity ----
+
+  async getMyPosts(userId: string): Promise<MyPostActivity[]> {
+    const posts = read<Post[]>(KEY.posts, [])
+      .filter((p) => p.authorId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const postLikes = read<MockLike[]>(KEY.postLikes, []);
+    const comments = read<Comment[]>(KEY.comments, []);
+    return posts.map((post) => ({
+      post: { ...post, likeCount: postLikes.filter((l) => l.targetId === post.id).length },
+      commentCount: comments.filter((c) => c.postId === post.id).length,
+    }));
+  }
+
+  async getMyVotes(studentId: string): Promise<MyVoteActivity[]> {
+    const votes = read<PollVote[]>(KEY.votes, []).filter((v) => v.studentId === studentId);
+    const polls = read<Poll[]>(KEY.polls, []);
+    const posts = read<Post[]>(KEY.posts, []);
+
+    const votesByPoll = new Map<string, { optionIds: string[]; votedAt: string }>();
+    for (const v of votes) {
+      const existing = votesByPoll.get(v.pollId);
+      if (existing) {
+        existing.optionIds.push(v.optionId);
+      } else {
+        votesByPoll.set(v.pollId, { optionIds: [v.optionId], votedAt: v.votedAt });
+      }
+    }
+
+    const results: MyVoteActivity[] = [];
+    for (const [pollId, voteInfo] of votesByPoll) {
+      const poll = polls.find((p) => p.id === pollId);
+      if (!poll) continue;
+      const post = posts.find((p) => p.id === poll.postId);
+      if (!post) continue;
+      results.push({
+        postId: post.id,
+        postTranslations: post.translations,
+        postOriginalLanguage: post.originalLanguage,
+        votedOptionLabels: voteInfo.optionIds.map((id) => poll.options.find((o) => o.id === id)?.label ?? ""),
+        votedAt: voteInfo.votedAt,
+      });
+    }
+    return results.sort((a, b) => b.votedAt.localeCompare(a.votedAt));
   }
 }

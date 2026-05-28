@@ -2,6 +2,8 @@ import type {
   AppNotification,
   Comment,
   LotteryWin,
+  MyPostActivity,
+  MyVoteActivity,
   Nationality,
   Poll,
   PollResult,
@@ -31,7 +33,7 @@ export interface DataRepository {
 
   // posts
   listPosts(): Promise<Post[]>;
-  getPost(id: string): Promise<Post | null>;
+  getPost(id: string, studentId?: string): Promise<Post | null>;
   createPost(input: Omit<Post, "id" | "createdAt">): Promise<Post>;
   deletePost(id: string): Promise<void>;
 
@@ -54,7 +56,7 @@ export interface DataRepository {
   deleteSchedule(id: string): Promise<void>;
 
   // comments
-  listComments(postId: string): Promise<Comment[]>;
+  listComments(postId: string, studentId?: string): Promise<Comment[]>;
   createComment(
     input: Omit<Comment, "id" | "createdAt" | "replies">
   ): Promise<Comment>;
@@ -67,7 +69,15 @@ export interface DataRepository {
   ): Promise<AppNotification>;
   markAllRead(userId: string): Promise<void>;
 
+  // likes
+  togglePostLike(postId: string, studentId: string): Promise<{ liked: boolean; count: number }>;
+  toggleCommentLike(commentId: string, studentId: string): Promise<{ liked: boolean; count: number }>;
+
   // lottery
   addLotteryWin(studentId: string): Promise<LotteryWin>;
   getLotteryWins(studentId: string): Promise<LotteryWin[]>;
+
+  // activity
+  getMyPosts(userId: string): Promise<MyPostActivity[]>;
+  getMyVotes(studentId: string): Promise<MyVoteActivity[]>;
 }

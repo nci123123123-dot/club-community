@@ -1,4 +1,4 @@
-import { CalendarDays, Home, MessageSquareText, Settings } from "lucide-react";
+import { Activity, Home, MessageSquareText, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -11,6 +11,6 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/home", labelKey: "nav.home", icon: Home },
   { href: "/board", labelKey: "nav.board", icon: MessageSquareText },
-  { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays },
+  { href: "/activity", labelKey: "nav.activity", icon: Activity },
   { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ];

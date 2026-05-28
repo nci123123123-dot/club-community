@@ -4,6 +4,8 @@ import type {
   Comment,
   Language,
   LotteryWin,
+  MyPostActivity,
+  MyVoteActivity,
   Nationality,
   Poll,
   PollResult,
@@ -97,7 +99,7 @@ interface DBComment {
   created_at: string;
 }
 
-function mapComment(row: DBComment): Comment {
+function mapComment(row: DBComment, likeCount = 0, isLikedByMe = false): Comment {
   return {
     id: row.id,
     postId: row.post_id,
@@ -107,6 +109,8 @@ function mapComment(row: DBComment): Comment {
     authorNationality: row.author_nationality as Nationality,
     content: row.content,
     translations: row.translations ?? {},
+    likeCount,
+    isLikedByMe,
     createdAt: row.created_at,
   };
 }
@@ -260,14 +264,17 @@ export class SupabaseRepository implements DataRepository {
     return (data ?? []).map((row) => mapPost(row as DBPost));
   }
 
-  async getPost(id: string): Promise<Post | null> {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*, translations(*)")
-      .eq("id", id)
-      .maybeSingle();
+  async getPost(id: string, studentId?: string): Promise<Post | null> {
+    const [{ data, error }, { count: likeCount }, { data: myLike }] = await Promise.all([
+      supabase.from("posts").select("*, translations(*)").eq("id", id).maybeSingle(),
+      supabase.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", id),
+      studentId
+        ? supabase.from("post_likes").select("id").eq("post_id", id).eq("student_id", studentId).maybeSingle()
+        : Promise.resolve({ data: null, error: null, count: null, status: 200, statusText: "OK" }),
+    ]);
     throwIfError(error, "getPost");
-    return data ? mapPost(data as DBPost) : null;
+    if (!data) return null;
+    return { ...mapPost(data as DBPost), likeCount: likeCount ?? 0, isLikedByMe: !!myLike };
   }
 
   async createPost(input: Omit<Post, "id" | "createdAt">): Promise<Post> {
@@ -560,34 +567,44 @@ export class SupabaseRepository implements DataRepository {
 
   // ---- comments ----
 
-  async listComments(postId: string): Promise<Comment[]> {
+  async listComments(postId: string, studentId?: string): Promise<Comment[]> {
     const [{ data: topData, error: topErr }, { data: replyData, error: replyErr }] =
       await Promise.all([
-        supabase
-          .from("comments")
-          .select("*")
-          .eq("post_id", postId)
-          .is("parent_id", null)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("comments")
-          .select("*")
-          .eq("post_id", postId)
-          .not("parent_id", "is", null)
-          .order("created_at", { ascending: true }),
+        supabase.from("comments").select("*").eq("post_id", postId).is("parent_id", null).order("created_at", { ascending: true }),
+        supabase.from("comments").select("*").eq("post_id", postId).not("parent_id", "is", null).order("created_at", { ascending: true }),
       ]);
     throwIfError(topErr, "listComments:top");
     throwIfError(replyErr, "listComments:replies");
+
+    const allIds = [
+      ...(topData ?? []).map((r: DBComment) => r.id),
+      ...(replyData ?? []).map((r: DBComment) => r.id),
+    ];
+
+    let likeCountMap = new Map<string, number>();
+    let likedSet = new Set<string>();
+    if (allIds.length > 0) {
+      const [{ data: allLikes }, { data: myLikes }] = await Promise.all([
+        supabase.from("comment_likes").select("comment_id").in("comment_id", allIds),
+        studentId
+          ? supabase.from("comment_likes").select("comment_id").in("comment_id", allIds).eq("student_id", studentId)
+          : Promise.resolve({ data: [] as { comment_id: string }[], error: null }),
+      ]);
+      for (const { comment_id } of (allLikes ?? []) as { comment_id: string }[]) {
+        likeCountMap.set(comment_id, (likeCountMap.get(comment_id) ?? 0) + 1);
+      }
+      likedSet = new Set((myLikes ?? []).map((r) => (r as { comment_id: string }).comment_id));
+    }
 
     const replyMap = new Map<string, Comment[]>();
     for (const row of (replyData ?? []) as DBComment[]) {
       const pid = row.parent_id!;
       if (!replyMap.has(pid)) replyMap.set(pid, []);
-      replyMap.get(pid)!.push(mapComment(row));
+      replyMap.get(pid)!.push(mapComment(row, likeCountMap.get(row.id) ?? 0, likedSet.has(row.id)));
     }
 
     return (topData ?? []).map((row: DBComment) => ({
-      ...mapComment(row),
+      ...mapComment(row, likeCountMap.get(row.id) ?? 0, likedSet.has(row.id)),
       replies: replyMap.get(row.id) ?? [],
     }));
   }
@@ -614,11 +631,38 @@ export class SupabaseRepository implements DataRepository {
   }
 
   async deleteComment(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("comments").delete().eq("id", id);
     throwIfError(error, "deleteComment");
+  }
+
+  // ---- likes ----
+
+  async togglePostLike(postId: string, studentId: string): Promise<{ liked: boolean; count: number }> {
+    const { data: existing } = await supabase
+      .from("post_likes").select("id").eq("post_id", postId).eq("student_id", studentId).maybeSingle();
+    if (existing) {
+      const { error } = await supabase.from("post_likes").delete().eq("post_id", postId).eq("student_id", studentId);
+      throwIfError(error, "togglePostLike:delete");
+    } else {
+      const { error } = await supabase.from("post_likes").insert({ post_id: postId, student_id: studentId });
+      throwIfError(error, "togglePostLike:insert");
+    }
+    const { count } = await supabase.from("post_likes").select("*", { count: "exact", head: true }).eq("post_id", postId);
+    return { liked: !existing, count: count ?? 0 };
+  }
+
+  async toggleCommentLike(commentId: string, studentId: string): Promise<{ liked: boolean; count: number }> {
+    const { data: existing } = await supabase
+      .from("comment_likes").select("id").eq("comment_id", commentId).eq("student_id", studentId).maybeSingle();
+    if (existing) {
+      const { error } = await supabase.from("comment_likes").delete().eq("comment_id", commentId).eq("student_id", studentId);
+      throwIfError(error, "toggleCommentLike:delete");
+    } else {
+      const { error } = await supabase.from("comment_likes").insert({ comment_id: commentId, student_id: studentId });
+      throwIfError(error, "toggleCommentLike:insert");
+    }
+    const { count } = await supabase.from("comment_likes").select("*", { count: "exact", head: true }).eq("comment_id", commentId);
+    return { liked: !existing, count: count ?? 0 };
   }
 
   // ---- notifications ----
@@ -701,5 +745,104 @@ export class SupabaseRepository implements DataRepository {
       wonAt: row.won_at,
       prize: row.prize,
     }));
+  }
+
+  // ---- activity ----
+
+  async getMyPosts(userId: string): Promise<MyPostActivity[]> {
+    const { data: postsData, error: postsErr } = await supabase
+      .from("posts")
+      .select("*, translations(*)")
+      .eq("author_id", userId)
+      .order("created_at", { ascending: false });
+    throwIfError(postsErr, "getMyPosts:posts");
+    if (!postsData?.length) return [];
+
+    const postIds = (postsData as DBPost[]).map((p) => p.id);
+    const [{ data: likesData }, { data: commentsData }] = await Promise.all([
+      supabase.from("post_likes").select("post_id").in("post_id", postIds),
+      supabase.from("comments").select("post_id").in("post_id", postIds),
+    ]);
+
+    const likeCountMap = new Map<string, number>();
+    for (const { post_id } of (likesData ?? []) as { post_id: string }[]) {
+      likeCountMap.set(post_id, (likeCountMap.get(post_id) ?? 0) + 1);
+    }
+    const commentCountMap = new Map<string, number>();
+    for (const { post_id } of (commentsData ?? []) as { post_id: string }[]) {
+      commentCountMap.set(post_id, (commentCountMap.get(post_id) ?? 0) + 1);
+    }
+
+    return (postsData as DBPost[]).map((row) => ({
+      post: { ...mapPost(row), likeCount: likeCountMap.get(row.id) ?? 0 },
+      commentCount: commentCountMap.get(row.id) ?? 0,
+    }));
+  }
+
+  async getMyVotes(studentId: string): Promise<MyVoteActivity[]> {
+    const { data: votesData, error: votesErr } = await supabase
+      .from("poll_votes")
+      .select("poll_id, poll_option_id, voted_at")
+      .eq("student_id", studentId)
+      .order("voted_at", { ascending: false });
+    throwIfError(votesErr, "getMyVotes:votes");
+    if (!votesData?.length) return [];
+
+    type VoteRow = { poll_id: string; poll_option_id: string; voted_at: string };
+    const votesByPoll = new Map<string, { optionIds: string[]; votedAt: string }>();
+    for (const v of votesData as VoteRow[]) {
+      const existing = votesByPoll.get(v.poll_id);
+      if (existing) {
+        existing.optionIds.push(v.poll_option_id);
+      } else {
+        votesByPoll.set(v.poll_id, { optionIds: [v.poll_option_id], votedAt: v.voted_at });
+      }
+    }
+
+    const pollIds = [...votesByPoll.keys()];
+    const { data: pollsData, error: pollsErr } = await supabase
+      .from("polls")
+      .select("id, post_id, poll_options(id, label)")
+      .in("id", pollIds);
+    throwIfError(pollsErr, "getMyVotes:polls");
+
+    type PollRow = { id: string; post_id: string; poll_options: { id: string; label: string }[] };
+    const pollToPostId = new Map<string, string>();
+    const optionLabelMap = new Map<string, string>();
+    for (const poll of (pollsData ?? []) as PollRow[]) {
+      pollToPostId.set(poll.id, poll.post_id);
+      for (const opt of poll.poll_options ?? []) {
+        optionLabelMap.set(opt.id, opt.label);
+      }
+    }
+
+    const postIds = [...new Set(pollToPostId.values())];
+    const { data: postsData, error: postsErr } = await supabase
+      .from("posts")
+      .select("*, translations(*)")
+      .in("id", postIds);
+    throwIfError(postsErr, "getMyVotes:posts");
+
+    const postMap = new Map<string, Post>();
+    for (const row of (postsData ?? []) as DBPost[]) {
+      postMap.set(row.id, mapPost(row));
+    }
+
+    return pollIds
+      .map((pollId): MyVoteActivity | null => {
+        const voteInfo = votesByPoll.get(pollId)!;
+        const postId = pollToPostId.get(pollId);
+        if (!postId) return null;
+        const post = postMap.get(postId);
+        if (!post) return null;
+        return {
+          postId,
+          postTranslations: post.translations,
+          postOriginalLanguage: post.originalLanguage,
+          votedOptionLabels: voteInfo.optionIds.map((id) => optionLabelMap.get(id) ?? ""),
+          votedAt: voteInfo.votedAt,
+        };
+      })
+      .filter((x): x is MyVoteActivity => x !== null);
   }
 }
