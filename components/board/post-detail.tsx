@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Heart, Languages, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Languages, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import type { Poll, Post, User } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
@@ -174,12 +174,12 @@ export function PostDetail({ postId }: PostDetailProps) {
           className={cn(
             "inline-flex items-center gap-1.5 text-sm transition-colors",
             post.isLikedByMe
-              ? "text-rose-500"
-              : "text-muted-foreground hover:text-rose-500",
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground",
             (!currentUser || likingPost) && "cursor-default opacity-60"
           )}
         >
-          <Heart className={cn("size-4", post.isLikedByMe && "fill-current")} />
+          <span>👍</span>
           <span>{post.likeCount ?? 0}</span>
         </button>
       </div>

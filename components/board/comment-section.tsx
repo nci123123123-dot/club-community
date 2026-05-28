@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CornerDownRight, Heart, Loader2, Trash2 } from "lucide-react";
+import { CornerDownRight, Loader2, Trash2 } from "lucide-react";
 import type { Comment } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { useT } from "@/lib/i18n/provider";
@@ -209,11 +209,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
                     disabled={!user || likingId === comment.id}
                     className={cn(
                       "inline-flex items-center gap-1 text-xs transition-colors",
-                      comment.isLikedByMe ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+                      comment.isLikedByMe ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                       (!user || likingId === comment.id) && "cursor-default opacity-60"
                     )}
                   >
-                    <Heart className={cn("size-3.5", comment.isLikedByMe && "fill-current")} />
+                    <span>👍</span>
                     <span>{comment.likeCount ?? 0}</span>
                   </button>
                   {user && (
@@ -276,11 +276,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
                             disabled={!user || likingId === reply.id}
                             className={cn(
                               "inline-flex items-center gap-1 text-xs transition-colors",
-                              reply.isLikedByMe ? "text-rose-500" : "text-muted-foreground hover:text-rose-500",
+                              reply.isLikedByMe ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                               (!user || likingId === reply.id) && "cursor-default opacity-60"
                             )}
                           >
-                            <Heart className={cn("size-3.5", reply.isLikedByMe && "fill-current")} />
+                            <span>👍</span>
                             <span>{reply.likeCount ?? 0}</span>
                           </button>
                         </div>
