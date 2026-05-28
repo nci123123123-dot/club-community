@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CornerDownRight, Loader2, Trash2 } from "lucide-react";
 import type { Comment } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils";
 
 interface CommentSectionProps {
   postId: string;
+  postAuthorId?: string;
 }
 
-export function CommentSection({ postId }: CommentSectionProps) {
+export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
   const { t, lang } = useT();
   const { user } = useCurrentUser();
   const [comments, setComments] = useState<Comment[] | null>(null);
@@ -30,6 +31,20 @@ export function CommentSection({ postId }: CommentSectionProps) {
   const [likingId, setLikingId] = useState<string | null>(null);
 
   const admin = isAdmin(user);
+
+  const anonMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!comments) return map;
+    let n = 0;
+    function visit(c: Comment) {
+      if (c.authorId && c.authorId !== postAuthorId && !map.has(c.authorId)) {
+        map.set(c.authorId, ++n);
+      }
+      for (const r of c.replies ?? []) visit(r);
+    }
+    for (const c of comments) visit(c);
+    return map;
+  }, [comments, postAuthorId]);
 
   const load = useCallback(async () => {
     setComments(await getRepository().listComments(postId, user?.studentId));
@@ -140,8 +155,16 @@ export function CommentSection({ postId }: CommentSectionProps) {
           <span className="font-mono text-amber-600 dark:text-amber-400">
             {comment.authorStudentId}
           </span>
+        ) : comment.authorId && comment.authorId === postAuthorId ? (
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[11px] font-medium leading-none text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            {t("board.author")}
+          </span>
         ) : (
-          <span>{t("common.anonymous")}</span>
+          <span>
+            {comment.authorId
+              ? `${t("common.anonymous")}${anonMap.get(comment.authorId) ?? ""}`
+              : t("common.anonymous")}
+          </span>
         )}
         <span className="ml-auto">{formatDateTime(comment.createdAt, lang)}</span>
         {canDelete(comment) && (

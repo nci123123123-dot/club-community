@@ -202,7 +202,7 @@ export function PostDetail({ postId }: PostDetailProps) {
 
       <hr className="border-border" />
 
-      <CommentSection postId={post.id} />
+      <CommentSection postId={post.id} postAuthorId={post.authorId} />
     </article>
   );
 }
