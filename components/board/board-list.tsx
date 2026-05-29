@@ -95,32 +95,22 @@ export function BoardList() {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveCategory(null)}
-          className={cn(
-            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-            activeCategory === null
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {t("board.categoryAll")}
-        </button>
-        {CATEGORIES.map((cat) => (
+      <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {([null, ...CATEGORIES] as (PostCategory | null)[]).map((cat) => (
           <button
-            key={cat}
+            key={cat ?? "all"}
             type="button"
             onClick={() => setActiveCategory(cat)}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
               activeCategory === cat
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             )}
           >
-            {t(`board.category${cat.charAt(0).toUpperCase()}${cat.slice(1)}`)}
+            {cat === null
+              ? t("board.categoryAll")
+              : t(`board.category${cat.charAt(0).toUpperCase()}${cat.slice(1)}`)}
           </button>
         ))}
       </div>

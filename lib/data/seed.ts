@@ -6,7 +6,8 @@ import { read, write } from "./mock/store";
 // Bump when the sample content (or its translations) changes so existing
 // installs re-seed. v1 used the offline mock translator; v2 uses real
 // translations via /api/translate. v3 adds admin support + full data reset.
-const SEED_VERSION = 3;
+// v4 forces cache clear to remove stale notices/data from old sessions.
+const SEED_VERSION = 4;
 const VERSION_KEY = "cc.seedVersion";
 const LEGACY_FLAG = "cc.seeded";
 
