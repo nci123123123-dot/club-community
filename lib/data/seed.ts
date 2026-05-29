@@ -7,7 +7,8 @@ import { read, write } from "./mock/store";
 // installs re-seed. v1 used the offline mock translator; v2 uses real
 // translations via /api/translate. v3 adds admin support + full data reset.
 // v4 forces cache clear to remove stale notices/data from old sessions.
-const SEED_VERSION = 4;
+// v5 removes the seeded "공지" post that was misidentified as a notices section.
+const SEED_VERSION = 5;
 const VERSION_KEY = "cc.seedVersion";
 const LEGACY_FLAG = "cc.seeded";
 
@@ -63,20 +64,6 @@ export async function seedRepository(repo: DataRepository): Promise<void> {
   resetAllData();
   write(VERSION_KEY, SEED_VERSION);
   write(LEGACY_FLAG, true);
-
-  // --- Notice post ---
-  const noticeTranslations = await autoTranslatePost(
-    "동아리 신입 환영회 공지",
-    "이번 주 금요일에 신입 환영회를 진행합니다. 많은 참여 바랍니다!",
-    "ko"
-  );
-  await repo.createPost({
-    authorId: SEED_AUTHOR,
-    authorNationality: "KR",
-    originalLanguage: "ko",
-    tags: ["공지"],
-    translations: noticeTranslations,
-  });
 
   // --- MT post + poll + sample votes ---
   const mtTranslations = await autoTranslatePost(
