@@ -46,6 +46,7 @@ export interface DataRepository {
   getPollResults(pollId: string): Promise<PollResult[]>;
   getPollTotalVoters(pollId: string): Promise<number>;
   getPollVotes(pollId: string): Promise<PollVote[]>;
+  closePoll(pollId: string): Promise<void>;
 
   // schedules
   listSchedules(): Promise<Schedule[]>;

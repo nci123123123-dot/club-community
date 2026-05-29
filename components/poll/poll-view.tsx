@@ -125,6 +125,18 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
     }
   }
 
+  async function handleClosePoll() {
+    if (!window.confirm(t("poll.closeConfirm"))) return;
+    setSubmitting(true);
+    try {
+      await getRepository().closePoll(poll.id);
+      toast.success(t("poll.closeSuccess"));
+      await refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function cancelVote() {
     if (!user) return;
     setSubmitting(true);
@@ -272,6 +284,22 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
           >
             {submitting && <Loader2 className="size-4 animate-spin" />}
             {t("poll.vote")}
+          </Button>
+        </div>
+      )}
+
+      {/* Early close button: author or admin, only while poll is active */}
+      {(isAuthor || admin) && !isClosed && voted !== null && (
+        <div className="border-t pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
+            onClick={handleClosePoll}
+            disabled={submitting}
+          >
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            {t("poll.closeNow")}
           </Button>
         </div>
       )}

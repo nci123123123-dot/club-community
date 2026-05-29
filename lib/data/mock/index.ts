@@ -213,6 +213,14 @@ export class MockRepository implements DataRepository {
     return read<PollVote[]>(KEY.votes, []).filter((v) => v.pollId === pollId);
   }
 
+  async closePoll(pollId: string): Promise<void> {
+    const polls = read<Poll[]>(KEY.polls, []);
+    write(
+      KEY.polls,
+      polls.map((p) => p.id === pollId ? { ...p, closesAt: new Date().toISOString() } : p)
+    );
+  }
+
   // ---- schedules ----
   async listSchedules(): Promise<Schedule[]> {
     const schedules = read<Schedule[]>(KEY.schedules, []);

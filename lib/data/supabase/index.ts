@@ -504,6 +504,14 @@ export class SupabaseRepository implements DataRepository {
     );
   }
 
+  async closePoll(pollId: string): Promise<void> {
+    const { error } = await supabase
+      .from("polls")
+      .update({ closes_at: new Date().toISOString() })
+      .eq("id", pollId);
+    throwIfError(error, "closePoll");
+  }
+
   // ---- schedules ----
 
   async listSchedules(): Promise<Schedule[]> {
