@@ -8,9 +8,17 @@ import { NAV_ITEMS } from "./nav-items";
 import { LangSwitch } from "./lang-switch";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
+import { Footer } from "./footer";
 import { useCurrentUser } from "@/lib/user/provider";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
+
+const UTIL_LINKS = [
+  { label: "동의대 홈", href: "https://www.deu.ac.kr" },
+  { label: "종합정보시스템", href: "https://eis.deu.ac.kr" },
+  { label: "도서관", href: "https://lib.deu.ac.kr" },
+  { label: "국제교류처", href: "https://international.deu.ac.kr" },
+];
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -36,6 +44,36 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-svh flex-col">
+      {/* ── Utility bar ── */}
+      <div
+        className="hidden md:block"
+        style={{ backgroundColor: "#103f8f" }}
+      >
+        <div className="mx-auto flex h-[34px] max-w-4xl items-center justify-between px-4">
+          <div className="flex items-center gap-1 text-xs text-white/80">
+            <span className="mr-2 font-semibold text-white">동의대학교</span>
+            {UTIL_LINKS.map((l, i) => (
+              <span key={l.href} className="flex items-center gap-1">
+                {i > 0 && <span className="text-white/30">·</span>}
+                <a
+                  href={l.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-white"
+                >
+                  {l.label}
+                </a>
+              </span>
+            ))}
+          </div>
+          <span className="text-xs text-white/60">
+            {user.displayName}
+            <span className="ml-1 text-white/40">({user.studentId})</span>
+          </span>
+        </div>
+      </div>
+
+      {/* ── Main header ── */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-[68px] w-full max-w-4xl items-center gap-2 px-4">
           <Link href="/home" className="flex items-center gap-2.5">
@@ -61,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   isActive(pathname, item.href)
-                    ? "bg-muted text-foreground"
+                    ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -79,10 +117,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-24 pt-6 md:pb-10">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-24 pt-5 md:pb-10">
         {children}
       </main>
 
+      <Footer />
+
+      {/* ── Mobile bottom nav ── */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 backdrop-blur-md md:hidden">
         <div className="mx-auto grid max-w-4xl grid-cols-4">
           {NAV_ITEMS.map((item) => {

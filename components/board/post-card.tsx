@@ -4,18 +4,20 @@ import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import type { Post, PostCategory } from "@/lib/data/types";
 import { getTranslation, excerpt } from "@/lib/post";
-import { formatDateTime } from "@/lib/format";
+import { timeAgo } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
-import { NationalityBadge } from "@/components/nationality-badge";
 import { TranslatedText } from "@/components/translated-text";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  NATIONALITY_FLAG,
+  NATIONALITY_AVATAR_GRADIENT,
+} from "@/lib/nationality";
 import { cn } from "@/lib/utils";
 
-const CATEGORY_STYLE: Record<PostCategory, string> = {
-  general: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
-  question: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
-  gathering: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+/* ── Category badge ── */
+const CATEGORY_STYLE: Record<PostCategory, { bg: string; text: string; label: string }> = {
+  general:  { bg: "#e8f1fd", text: "#1c63b0", label: "자유" },
+  question: { bg: "#fef3df", text: "#b9760a", label: "질문" },
+  gathering:{ bg: "#e6f6ee", text: "#138a55", label: "모임" },
 };
 
 interface PostCardProps {
@@ -27,6 +29,7 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
   const { t, lang } = useT();
   const tr = getTranslation(post, lang);
   const category = post.category ?? "general";
+  const cat = CATEGORY_STYLE[category];
 
   const hasPoll = pollClosesAt !== undefined;
   const pollActive =
@@ -34,41 +37,85 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
 
   return (
     <Link href={`/board/${post.id}`} className="block">
-      <Card className="gap-2.5 p-3 transition-all duration-200 hover:-translate-y-[3px] hover:border-primary/20 hover:shadow-lg sm:gap-3 sm:p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-[15px] font-semibold leading-snug sm:text-base">{tr.title}</h3>
+      <article
+        className={cn(
+          "rounded-xl border border-border bg-card p-3 transition-all duration-200",
+          "hover:-translate-y-[3px] hover:border-primary/30 hover:shadow-md",
+          "sm:p-4"
+        )}
+      >
+        {/* ── Top badges row ── */}
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          {/* Category */}
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+            style={{ backgroundColor: cat.bg, color: cat.text }}
+          >
+            {t(`board.category${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
+          </span>
+
+          {/* Poll badge */}
           {hasPoll && (
             <span
               className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                 pollActive
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
               )}
             >
-              <BarChart3 className="size-3" />
+              <BarChart3 className="size-2.5" />
               {pollActive ? t("board.votingActive") : t("board.votingClosed")}
             </span>
           )}
-        </div>
-        <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground sm:text-sm">{excerpt(tr.content)}</p>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2">
-          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", CATEGORY_STYLE[category])}>
-            {t(`board.category${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
-          </span>
-          <NationalityBadge nationality={post.authorNationality} />
-          {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="font-normal">
+
+          {/* Tags */}
+          {post.tags.slice(0, 2).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+            >
               <TranslatedText text={tag} prefix="#" />
-            </Badge>
+            </span>
           ))}
-          <div className="ml-auto flex items-center gap-2">
+        </div>
+
+        {/* ── Title ── */}
+        <h3 className="mb-1 text-[15px] font-bold leading-snug sm:text-base">
+          {tr.title}
+        </h3>
+
+        {/* ── Excerpt ── */}
+        <p className="mb-3 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
+          {excerpt(tr.content)}
+        </p>
+
+        {/* ── Footer: PostMeta + stats ── */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Avatar + nationality + time */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span
+              className="flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+              style={{ background: NATIONALITY_AVATAR_GRADIENT[post.authorNationality] }}
+            >
+              {NATIONALITY_FLAG[post.authorNationality]}
+            </span>
+            <span className="truncate text-[11px] text-muted-foreground">
+              {t(`nationality.${post.authorNationality}`)}
+            </span>
+            <span className="text-[11px] text-muted-foreground/50">·</span>
+            <span className="shrink-0 text-[11px] text-muted-foreground">
+              {timeAgo(post.createdAt, lang)}
+            </span>
+          </div>
+
+          {/* Like + comment counts */}
+          <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
             <span>👍 {post.likeCount ?? 0}</span>
             <span>💬 {post.commentCount ?? 0}</span>
-            <span className="hidden sm:inline">{formatDateTime(post.createdAt, lang)}</span>
           </div>
         </div>
-      </Card>
+      </article>
     </Link>
   );
 }

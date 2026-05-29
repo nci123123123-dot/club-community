@@ -1,6 +1,5 @@
 import type { Nationality } from "./data/types";
 
-/** CSS color token used to represent each nationality in badges and charts. */
 export const NATIONALITY_COLOR: Record<Nationality, string> = {
   KR: "var(--chart-1)",
   JP: "var(--chart-2)",
@@ -10,7 +9,6 @@ export const NATIONALITY_COLOR: Record<Nationality, string> = {
   OTHER: "var(--muted-foreground)",
 };
 
-/** Short uppercase code shown inside compact badges. */
 export const NATIONALITY_CODE: Record<Nationality, string> = {
   KR: "KR",
   JP: "JP",
@@ -18,4 +16,22 @@ export const NATIONALITY_CODE: Record<Nationality, string> = {
   VN: "VN",
   US: "US",
   OTHER: "ETC",
+};
+
+export const NATIONALITY_FLAG: Record<Nationality, string> = {
+  KR: "🇰🇷",
+  JP: "🇯🇵",
+  CN: "🇨🇳",
+  VN: "🇻🇳",
+  US: "🇺🇸",
+  OTHER: "🌐",
+};
+
+export const NATIONALITY_AVATAR_GRADIENT: Record<Nationality, string> = {
+  KR: "linear-gradient(135deg, #003478, #1c63b0)",
+  JP: "linear-gradient(135deg, #bc002d, #e63946)",
+  CN: "linear-gradient(135deg, #c81d1d, #f5a623)",
+  VN: "linear-gradient(135deg, #da251d, #ff7043)",
+  US: "linear-gradient(135deg, #002868, #3c5a9b)",
+  OTHER: "linear-gradient(135deg, #5d6f8c, #8a9ab0)",
 };
