@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HelpCircle, Loader2, Users, Users2 } from "lucide-react";
@@ -21,12 +21,38 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** Isolated component so useSearchParams() is only called when needed. */
+function BoardSubNavLinks({ tFn }: { tFn: (key: string) => string }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const active = pathname === "/board" ? searchParams.get("category") : null;
+
+  return (
+    <>
+      {BOARD_SUB_NAV.map((sub) => (
+        <Link
+          key={sub.href}
+          href={sub.href}
+          className={cn(
+            "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+            active === sub.category
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <sub.icon className="size-3.5" />
+          {tFn(sub.labelKey)}
+        </Link>
+      ))}
+    </>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, ready } = useCurrentUser();
   const { t } = useT();
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (ready && !user) router.replace("/onboarding");
@@ -39,8 +65,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
-  const boardSubActive = pathname === "/board" ? searchParams.get("category") : null;
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -60,34 +84,20 @@ export function AppShell({ children }: { children: ReactNode }) {
                   href={item.href}
                   className={cn(
                     "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                    isActive(pathname, item.href) && item.href !== "/board"
+                    isActive(pathname, item.href)
                       ? "bg-muted text-foreground"
-                      : item.href === "/board" && pathname === "/board" && !boardSubActive
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <item.icon className="size-4" />
                   {t(item.labelKey)}
                 </Link>
 
-                {/* Board sub-nav items — desktop only */}
-                {item.href === "/board" &&
-                  BOARD_SUB_NAV.map((sub) => (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      className={cn(
-                        "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
-                        boardSubActive === sub.category
-                          ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <sub.icon className="size-3.5" />
-                      {t(sub.labelKey)}
-                    </Link>
-                  ))}
+                {item.href === "/board" && (
+                  <Suspense>
+                    <BoardSubNavLinks tFn={t} />
+                  </Suspense>
+                )}
               </div>
             ))}
           </nav>
