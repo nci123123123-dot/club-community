@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_STYLE: Record<PostCategory, string> = {
-  general:  "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
   question: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
   gathering:"bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+  notice:   "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400",
 };
 
 interface PostCardProps {
@@ -26,7 +26,7 @@ interface PostCardProps {
 export function PostCard({ post, pollClosesAt }: PostCardProps) {
   const { t, lang } = useT();
   const tr = getTranslation(post, lang);
-  const category = post.category ?? "general";
+  const category = (post.category && post.category in CATEGORY_STYLE ? post.category : "question") as PostCategory;
 
   const hasPoll = pollClosesAt !== undefined;
   const pollActive = hasPoll && (pollClosesAt === null || new Date(pollClosesAt).getTime() > Date.now());

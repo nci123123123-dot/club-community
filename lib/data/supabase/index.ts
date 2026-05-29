@@ -162,7 +162,7 @@ function mapPost(row: DBPost): Post {
     authorNationality: row.author_nationality as Nationality,
     originalLanguage: row.original_language as Language,
     tags: row.tags ?? [],
-    category: (row.category ?? "general") as PostCategory,
+    category: (["question","gathering","notice"].includes(row.category ?? "") ? row.category : "question") as PostCategory,
     translations: (row.translations ?? []).map(
       (t): Translation => ({
         language: t.language as Language,
@@ -309,7 +309,7 @@ export class SupabaseRepository implements DataRepository {
         author_nationality: input.authorNationality,
         original_language: input.originalLanguage,
         tags: input.tags,
-        category: input.category ?? "general",
+        category: input.category ?? "question",
       })
       .select()
       .single();

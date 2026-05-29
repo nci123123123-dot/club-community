@@ -32,10 +32,22 @@ export function PostForm() {
   const [content, setContent] = useState("");
   const [tagsInput, setTagsInput] = useState("");
 
-  const [category, setCategory] = useState<PostCategory>("general");
+  const [category, setCategory] = useState<PostCategory>("question");
 
   const [pollEnabled, setPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollDraft>(emptyPollDraft);
+
+  function handleCategoryChange(cat: PostCategory) {
+    const prev = category;
+    setCategory(cat);
+    if (cat === "gathering" && !pollEnabled) {
+      setPollEnabled(true);
+    } else if (prev === "gathering" && cat !== "gathering" && pollEnabled) {
+      const hasInput =
+        poll.question.trim() !== "" || poll.options.some((o) => o.trim() !== "");
+      if (!hasInput) setPollEnabled(false);
+    }
+  }
 
   const [submitting, setSubmitting] = useState(false);
   const [lotteryPostId, setLotteryPostId] = useState<string | null>(null);
@@ -57,9 +69,15 @@ export function PostForm() {
       return;
     }
     const cleanOptions = poll.options.map((o) => o.trim()).filter(Boolean);
-    if (pollEnabled && (!poll.question.trim() || cleanOptions.length < 2 || !poll.closesAt)) {
-      toast.error(t("poll.selectOption"));
-      return;
+    if (pollEnabled) {
+      if (!poll.question.trim() || cleanOptions.length < 2) {
+        toast.error(t("poll.selectOption"));
+        return;
+      }
+      if (!poll.closesAt) {
+        toast.error(t("write.pollDateRequired"));
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -171,11 +189,11 @@ export function PostForm() {
         <div className="space-y-1.5">
           <Label>{t("board.categoryLabel")}</Label>
           <div className="flex gap-2">
-            {(["general", "question", "gathering"] as PostCategory[]).map((cat) => (
+            {(["question", "gathering", "notice"] as PostCategory[]).map((cat) => (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
                 className={cn(
                   "rounded-full px-3 py-1 text-sm font-medium transition-colors",
                   category === cat

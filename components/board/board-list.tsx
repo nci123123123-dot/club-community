@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES: PostCategory[] = ["general", "question", "gathering"];
+const CATEGORIES: PostCategory[] = ["question", "gathering", "notice"];
 
 function parseCategoryParam(value: string | null): PostCategory | null {
   return value && (CATEGORIES as string[]).includes(value) ? (value as PostCategory) : null;
@@ -73,7 +73,7 @@ export function BoardList() {
     if (!posts) return [];
     const q = query.trim().toLowerCase();
     return posts.filter((post) => {
-      if (activeCategory && (post.category ?? "general") !== activeCategory) return false;
+      if (activeCategory && (post.category ?? "question") !== activeCategory) return false;
       if (activeTag && !post.tags.includes(activeTag)) return false;
       if (!q) return true;
       const tr = getTranslation(post, lang);

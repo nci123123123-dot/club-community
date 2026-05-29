@@ -2,7 +2,7 @@ export type Language = "ko" | "ja" | "zh" | "vi" | "en";
 
 export type Nationality = "KR" | "JP" | "CN" | "VN" | "US" | "OTHER";
 
-export type PostCategory = "general" | "question" | "gathering";
+export type PostCategory = "question" | "gathering" | "notice";
 
 export const LANGUAGES: Language[] = ["ko", "ja", "zh", "vi", "en"];
 
