@@ -152,7 +152,6 @@ export function PostDetail({ postId }: PostDetailProps) {
           {tr.title}
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <NationalityBadge nationality={post.authorNationality} />
           <span className="ml-auto">{formatDateTime(post.createdAt, lang)}</span>
         </div>
       </header>

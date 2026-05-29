@@ -6,7 +6,6 @@ import type { Post, PostCategory } from "@/lib/data/types";
 import { getTranslation, excerpt } from "@/lib/post";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
-import { NationalityBadge } from "@/components/nationality-badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +52,6 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
           <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", CATEGORY_STYLE[category])}>
             {t(`board.category${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
           </span>
-          <NationalityBadge nationality={post.authorNationality} />
           <div className="ml-auto flex items-center gap-3">
             <span>👍 {post.likeCount ?? 0}</span>
             <span>💬 {post.commentCount ?? 0}</span>

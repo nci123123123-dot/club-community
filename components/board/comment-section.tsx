@@ -8,7 +8,6 @@ import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { isAdmin } from "@/lib/admin";
 import { formatDateTime } from "@/lib/format";
-import { NATIONALITY_COLOR } from "@/lib/nationality";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -143,14 +142,6 @@ export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
   function CommentMeta({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) {
     return (
       <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", isReply && "")}>
-        <span className="inline-flex items-center gap-1">
-          <span
-            aria-hidden
-            className="size-2 rounded-full"
-            style={{ backgroundColor: NATIONALITY_COLOR[comment.authorNationality] }}
-          />
-          {t(`nationality.${comment.authorNationality}`)}
-        </span>
         {admin && comment.authorStudentId ? (
           <span className="font-mono text-amber-600 dark:text-amber-400">
             {comment.authorStudentId}

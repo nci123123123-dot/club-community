@@ -3,26 +3,56 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
-import type { Nationality, Poll, PollResult, PollVote } from "@/lib/data/types";
+import type { Language, Nationality, Poll, PollResult, PollVote } from "@/lib/data/types";
 import { NATIONALITIES } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
 import { isAdmin } from "@/lib/admin";
-import { formatDate } from "@/lib/format";
 import { NATIONALITY_COLOR } from "@/lib/nationality";
-import { TranslatedText } from "@/components/translated-text";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-function tr(
+function trLabel(
   translations: Partial<Record<string, string>> | undefined,
   original: string,
   lang: string
 ): string {
   return translations?.[lang] ?? original;
 }
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+
+function timeUntilClose(closesAt: string, lang: Language): string {
+  const ms = new Date(closesAt).getTime() - Date.now();
+  if (ms <= 0) return "";
+  const days = Math.floor(ms / 86_400_000);
+  const hours = Math.floor((ms % 86_400_000) / 3_600_000);
+  const mins = Math.floor((ms % 3_600_000) / 60_000);
+
+  if (lang === "ko") {
+    if (days > 0) return `${days}일 ${hours}시간 후 마감`;
+    if (hours > 0) return `${hours}시간 ${mins}분 후 마감`;
+    return `${mins}분 후 마감`;
+  }
+  if (lang === "ja") {
+    if (days > 0) return `${days}日${hours}時間後締切`;
+    if (hours > 0) return `${hours}時間${mins}分後締切`;
+    return `${mins}分後締切`;
+  }
+  if (lang === "zh") {
+    if (days > 0) return `${days}天${hours}小时后截止`;
+    if (hours > 0) return `${hours}小时${mins}分后截止`;
+    return `${mins}分后截止`;
+  }
+  if (lang === "vi") {
+    if (days > 0) return `Còn ${days}ng ${hours}h`;
+    if (hours > 0) return `Còn ${hours}g ${mins}p`;
+    return `Còn ${mins}p`;
+  }
+  if (days > 0) return `Closes in ${days}d ${hours}h`;
+  if (hours > 0) return `Closes in ${hours}h ${mins}m`;
+  return `Closes in ${mins}m`;
+}
 
 interface PollViewProps {
   poll: Poll;
@@ -111,7 +141,6 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
 
   const showResults = voted || isClosed;
 
-  // Build a label lookup (original + translations) from poll options.
   const optionLabelMap = Object.fromEntries(
     poll.options.map((o) => [
       o.id,
@@ -121,30 +150,37 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
 
   return (
     <Card className="gap-4 p-5">
-      <div className="flex items-center justify-between gap-3">
+      {/* Question + closed badge */}
+      <div className="flex items-start justify-between gap-3">
         <h2 className="font-semibold">
-          {tr(poll.questionTranslations, poll.question, lang)}
+          {trLabel(poll.questionTranslations, poll.question, lang)}
         </h2>
         {isClosed && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             {t("poll.closed")}
           </span>
         )}
       </div>
 
+      {/* Closed banner */}
+      {isClosed && (
+        <div className="rounded-lg bg-muted px-4 py-2.5 text-sm text-muted-foreground">
+          {t("poll.closedBanner")}
+        </div>
+      )}
+
       {voted === null ? (
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
       ) : showResults ? (
-        <div className="space-y-4">
+        /* ── Results ── */
+        <div className="space-y-3">
           {results.map((result) => {
-            const present = NATIONALITIES.filter(
-              (n) => result.byNationality[n] > 0
-            );
+            const present = NATIONALITIES.filter((n) => result.byNationality[n] > 0);
             return (
-              <div key={result.optionId} className="space-y-1.5">
+              <div key={result.optionId} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">
-                    {tr(optionLabelMap[result.optionId]?.translations, result.label, lang)}
+                    {trLabel(optionLabelMap[result.optionId]?.translations, result.label, lang)}
                   </span>
                   <span className="text-muted-foreground">
                     {result.total}{t("common.people")}
@@ -187,8 +223,9 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
           )}
         </div>
       ) : (
+        /* ── Voting UI ── */
         <div className="space-y-3">
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {poll.options
               .slice()
               .sort((a, b) => a.position - b.position)
@@ -200,30 +237,36 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
                     type="button"
                     onClick={() => toggle(option.id)}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg border px-4 py-3 text-left text-sm transition-all hover:border-primary",
-                      active && "border-primary ring-1 ring-primary"
+                      "flex w-full items-center gap-3 rounded-xl border-2 px-5 py-4 text-left text-base font-medium transition-all",
+                      active
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40 hover:bg-muted/30"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex size-4 items-center justify-center rounded-full border",
-                        active && "border-primary bg-primary text-primary-foreground"
+                        "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/30"
                       )}
                     >
                       {active && <Check className="size-3" />}
                     </span>
-                    {tr(option.labelTranslations, option.label, lang)}
+                    {trLabel(option.labelTranslations, option.label, lang)}
                   </button>
                 );
               })}
           </div>
-          {poll.closesAt && (
+
+          {poll.closesAt && !isClosed && (
             <p className="text-xs text-muted-foreground">
-              {t("poll.closesAt")}: {formatDate(poll.closesAt, lang)}
+              {timeUntilClose(poll.closesAt, lang)}
             </p>
           )}
+
           <Button
-            className="w-full"
+            className="h-12 w-full text-base font-semibold"
             onClick={vote}
             disabled={submitting || selected.length === 0}
           >
@@ -266,11 +309,11 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
                         </span>
                       </td>
                       <td className="py-1">
-                        {tr(
-                        optionLabelMap[v.optionId]?.translations,
-                        optionLabelMap[v.optionId]?.original ?? v.optionId,
-                        lang
-                      )}
+                        {trLabel(
+                          optionLabelMap[v.optionId]?.translations,
+                          optionLabelMap[v.optionId]?.original ?? v.optionId,
+                          lang
+                        )}
                       </td>
                     </tr>
                   ))}
