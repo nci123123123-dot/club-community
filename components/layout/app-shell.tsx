@@ -45,9 +45,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             >
               <Users className="size-4" />
             </span>
-            <div className="hidden flex-col sm:flex">
+            <div className="flex flex-col">
               <span className="text-sm font-bold leading-tight">동의대학교</span>
-              <span className="text-[10px] leading-tight text-muted-foreground">
+              <span className="hidden text-[10px] leading-tight text-muted-foreground sm:block">
                 동아리 커뮤니티 · Club Community
               </span>
             </div>

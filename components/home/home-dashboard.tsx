@@ -105,7 +105,7 @@ export function HomeDashboard() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* ── Hero ── */}
       <section
         className="relative overflow-hidden rounded-[20px]"
@@ -123,28 +123,27 @@ export function HomeDashboard() {
             backgroundSize: "22px 22px",
           }}
         />
-        <div className="relative z-10 p-7 sm:p-11">
-          <div className="space-y-3">
+        <div className="relative z-10 p-6 sm:p-11">
+          <div className="space-y-2.5 sm:space-y-3">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
               동의대학교 국제교류 동아리
             </div>
-            <h1 className="text-2xl font-extrabold leading-snug text-white sm:text-3xl">
-              함께 만들어가는
-              <br className="hidden sm:block" /> 캠퍼스 생활
+            <h1 className="text-[22px] font-extrabold leading-snug text-white sm:text-3xl">
+              함께 만들어가는 캠퍼스 생활
             </h1>
-            <p className="max-w-xs text-sm text-white/70">
+            <p className="text-[13px] text-white/70 sm:text-sm">
               다양한 국가의 학생들과 소통하고 동아리 활동을 공유하세요
             </p>
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row">
               <Link
                 href="/board/new"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#103f8f] transition-opacity hover:opacity-90"
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#103f8f] transition-opacity hover:opacity-90 sm:w-auto"
               >
                 글쓰기
               </Link>
               <Link
                 href="/board"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 sm:w-auto"
               >
                 게시판 둘러보기
               </Link>
@@ -153,11 +152,11 @@ export function HomeDashboard() {
 
           {/* Stats bar */}
           {stats && (
-            <div className="mt-6 flex gap-6 border-t border-white/20 pt-4 sm:gap-10">
+            <div className="mt-5 flex gap-6 border-t border-white/20 pt-4 sm:mt-6 sm:gap-10">
               {stats.map((stat) => (
                 <div key={stat.label}>
-                  <div className="text-xl font-bold text-white sm:text-2xl">{stat.value}</div>
-                  <div className="text-xs text-white/60">{stat.label}</div>
+                  <div className="text-lg font-bold text-white sm:text-2xl">{stat.value}</div>
+                  <div className="text-[11px] text-white/60 sm:text-xs">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -167,7 +166,7 @@ export function HomeDashboard() {
 
       {/* ── Main content grid ── */}
       {data === null ? (
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
               <Card key={i} className="gap-3 p-4">
@@ -186,7 +185,7 @@ export function HomeDashboard() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.6fr_1fr]">
           {/* ── Left — recent posts ── */}
           <section>
             <SectionHeader icon={FileText} title={t("home.recentPosts")} href="/board" />

@@ -34,9 +34,9 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
 
   return (
     <Link href={`/board/${post.id}`} className="block">
-      <Card className="gap-3 p-4 transition-all duration-200 hover:-translate-y-[3px] hover:border-primary/20 hover:shadow-lg">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="font-semibold leading-snug">{tr.title}</h3>
+      <Card className="gap-2.5 p-3 transition-all duration-200 hover:-translate-y-[3px] hover:border-primary/20 hover:shadow-lg sm:gap-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[15px] font-semibold leading-snug sm:text-base">{tr.title}</h3>
           {hasPoll && (
             <span
               className={cn(
@@ -51,8 +51,8 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
             </span>
           )}
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">{excerpt(tr.content)}</p>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground sm:text-sm">{excerpt(tr.content)}</p>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2">
           <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", CATEGORY_STYLE[category])}>
             {t(`board.category${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
           </span>
@@ -62,10 +62,10 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
               <TranslatedText text={tag} prefix="#" />
             </Badge>
           ))}
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2">
             <span>👍 {post.likeCount ?? 0}</span>
             <span>💬 {post.commentCount ?? 0}</span>
-            <span>{formatDateTime(post.createdAt, lang)}</span>
+            <span className="hidden sm:inline">{formatDateTime(post.createdAt, lang)}</span>
           </div>
         </div>
       </Card>
