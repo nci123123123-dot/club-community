@@ -2,8 +2,8 @@
 
 import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Loader2, Users } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { HelpCircle, Loader2, Users, Users2 } from "lucide-react";
 import { NAV_ITEMS } from "./nav-items";
 import { LangSwitch } from "./lang-switch";
 import { ThemeToggle } from "./theme-toggle";
@@ -11,6 +11,11 @@ import { NotificationBell } from "./notification-bell";
 import { useCurrentUser } from "@/lib/user/provider";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
+
+const BOARD_SUB_NAV = [
+  { href: "/board?category=question", labelKey: "nav.boardQuestion", icon: HelpCircle, category: "question" },
+  { href: "/board?category=gathering", labelKey: "nav.boardGathering", icon: Users2, category: "gathering" },
+] as const;
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -21,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useT();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (ready && !user) router.replace("/onboarding");
@@ -33,6 +39,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  const boardSubActive = pathname === "/board" ? searchParams.get("category") : null;
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -47,19 +55,40 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <nav className="ml-4 hidden items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  isActive(pathname, item.href)
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <item.icon className="size-4" />
-                {t(item.labelKey)}
-              </Link>
+              <div key={item.href} className="flex items-center gap-1">
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    isActive(pathname, item.href) && item.href !== "/board"
+                      ? "bg-muted text-foreground"
+                      : item.href === "/board" && pathname === "/board" && !boardSubActive
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  {t(item.labelKey)}
+                </Link>
+
+                {/* Board sub-nav items — desktop only */}
+                {item.href === "/board" &&
+                  BOARD_SUB_NAV.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        boardSubActive === sub.category
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <sub.icon className="size-3.5" />
+                      {t(sub.labelKey)}
+                    </Link>
+                  ))}
+              </div>
             ))}
           </nav>
 

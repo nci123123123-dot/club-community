@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type { Post, PostCategory } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
@@ -17,13 +18,25 @@ import { cn } from "@/lib/utils";
 
 const CATEGORIES: PostCategory[] = ["general", "question", "gathering"];
 
+function parseCategoryParam(value: string | null): PostCategory | null {
+  return value && (CATEGORIES as string[]).includes(value) ? (value as PostCategory) : null;
+}
+
 export function BoardList() {
   const { t, lang } = useT();
+  const searchParams = useSearchParams();
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [pollMap, setPollMap] = useState<Map<string, string | null>>(new Map());
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<PostCategory | null>(null);
+  const [activeCategory, setActiveCategory] = useState<PostCategory | null>(
+    () => parseCategoryParam(searchParams.get("category"))
+  );
+
+  // Sync filter when URL param changes (e.g. clicking nav sub-items)
+  useEffect(() => {
+    setActiveCategory(parseCategoryParam(searchParams.get("category")));
+  }, [searchParams]);
 
   useEffect(() => {
     let active = true;
