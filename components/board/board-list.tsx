@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import type { Post } from "@/lib/data/types";
+import type { Post, PostCategory } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
 import { useT } from "@/lib/i18n/provider";
@@ -15,12 +15,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+const CATEGORIES: PostCategory[] = ["general", "question", "gathering"];
+
 export function BoardList() {
   const { t, lang } = useT();
   const [posts, setPosts] = useState<Post[] | null>(null);
-  const [pollIds, setPollIds] = useState<Set<string>>(new Set());
+  const [pollMap, setPollMap] = useState<Map<string, string | null>>(new Map());
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<PostCategory | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -32,8 +35,14 @@ export function BoardList() {
       );
       if (!active) return;
       setPosts(list);
-      setPollIds(
-        new Set(polls.filter((p) => p !== null).map((p) => p!.postId))
+      setPollMap(
+        new Map(
+          polls
+            .map((poll, i) =>
+              poll ? ([list[i].id, poll.closesAt] as [string, string | null]) : null
+            )
+            .filter((entry): entry is [string, string | null] => entry !== null)
+        )
       );
     }
     void load();
@@ -51,6 +60,7 @@ export function BoardList() {
     if (!posts) return [];
     const q = query.trim().toLowerCase();
     return posts.filter((post) => {
+      if (activeCategory && (post.category ?? "general") !== activeCategory) return false;
       if (activeTag && !post.tags.includes(activeTag)) return false;
       if (!q) return true;
       const tr = getTranslation(post, lang);
@@ -59,7 +69,7 @@ export function BoardList() {
         tr.content.toLowerCase().includes(q)
       );
     });
-  }, [posts, query, activeTag, lang]);
+  }, [posts, query, activeTag, activeCategory, lang]);
 
   return (
     <div className="space-y-5">
@@ -69,6 +79,37 @@ export function BoardList() {
           <Plus className="size-4" />
           {t("board.newPost")}
         </Link>
+      </div>
+
+      {/* Category tabs */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveCategory(null)}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            activeCategory === null
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {t("board.categoryAll")}
+        </button>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => setActiveCategory(cat)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              activeCategory === cat
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t(`board.category${cat.charAt(0).toUpperCase()}${cat.slice(1)}`)}
+          </button>
+        ))}
       </div>
 
       <div className="relative">
@@ -133,7 +174,7 @@ export function BoardList() {
             <PostCard
               key={post.id}
               post={post}
-              hasPoll={pollIds.has(post.id)}
+              pollClosesAt={pollMap.has(post.id) ? (pollMap.get(post.id) ?? null) : undefined}
             />
           ))}
         </div>

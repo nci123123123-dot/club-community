@@ -2,45 +2,33 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BarChart3, CalendarDays, FileText, Megaphone } from "lucide-react";
+import { Activity, BarChart3, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { Poll, Post, Schedule } from "@/lib/data/types";
+import type { Poll, Post } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
-import { formatTime } from "@/lib/format";
-import { isSameDay } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
-import { useCurrentUser } from "@/lib/user/provider";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const NOTICE_TAGS = ["공지", "notice", "お知らせ", "公告", "Thông báo"];
-
 interface DashboardData {
-  todaySchedules: Schedule[];
   recentPosts: Post[];
   activePolls: { poll: Poll; post: Post }[];
-  notices: Post[];
 }
 
 export function HomeDashboard() {
   const { t, lang } = useT();
-  const { user } = useCurrentUser();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
     let active = true;
     async function load() {
       const repo = getRepository();
-      const [posts, schedules] = await Promise.all([
-        repo.listPosts(),
-        repo.listSchedules(),
-      ]);
+      const posts = await repo.listPosts();
       const polls = await Promise.all(
         posts.map((p) => repo.getPollByPostId(p.id))
       );
       const now = Date.now();
-      const today = new Date();
       const activePolls = polls
         .map((poll, i) => ({ poll, post: posts[i] }))
         .filter(
@@ -51,14 +39,8 @@ export function HomeDashboard() {
         );
       if (!active) return;
       setData({
-        todaySchedules: schedules.filter((s) =>
-          isSameDay(new Date(s.startAt), today)
-        ),
         recentPosts: posts.slice(0, 3),
         activePolls,
-        notices: posts.filter((p) =>
-          p.tags.some((tag) => NOTICE_TAGS.includes(tag))
-        ),
       });
     }
     void load();
@@ -76,7 +58,7 @@ export function HomeDashboard() {
 
       {data === null ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <Card key={i} className="gap-3 p-4">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-full" />
@@ -87,43 +69,16 @@ export function HomeDashboard() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <Section
-            icon={CalendarDays}
-            title={t("home.todaySchedule")}
-            empty={data.todaySchedules.length === 0 ? t("home.noSchedule") : null}
+            icon={Activity}
+            title={t("home.mySchedule")}
+            empty={null}
           >
-            {data.todaySchedules.map((s) => (
-              <Link
-                key={s.id}
-                href="/calendar"
-                className="flex items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted"
-              >
-                <span
-                  aria-hidden
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: s.color }}
-                />
-                <span className="truncate">{s.title}</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {formatTime(s.startAt, lang)}
-                </span>
-              </Link>
-            ))}
-          </Section>
-
-          <Section
-            icon={Megaphone}
-            title={t("home.notices")}
-            empty={data.notices.length === 0 ? t("home.noNotices") : null}
-          >
-            {data.notices.map((p) => (
-              <Link
-                key={p.id}
-                href={`/board/${p.id}`}
-                className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
-              >
-                {getTranslation(p, lang).title}
-              </Link>
-            ))}
+            <Link
+              href="/activity"
+              className="block rounded-md px-1.5 py-1 text-sm text-primary hover:bg-muted"
+            >
+              {t("nav.activity")} →
+            </Link>
           </Section>
 
           <Section

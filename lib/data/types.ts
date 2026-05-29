@@ -2,6 +2,8 @@ export type Language = "ko" | "ja" | "zh" | "vi" | "en";
 
 export type Nationality = "KR" | "JP" | "CN" | "VN" | "US" | "OTHER";
 
+export type PostCategory = "general" | "question" | "gathering";
+
 export const LANGUAGES: Language[] = ["ko", "ja", "zh", "vi", "en"];
 
 export const NATIONALITIES: Nationality[] = ["KR", "JP", "CN", "VN", "US", "OTHER"];
@@ -29,6 +31,7 @@ export interface Post {
   originalLanguage: Language;
   tags: string[];
   translations: Translation[];
+  category?: PostCategory;
   likeCount?: number;
   commentCount?: number;
   isLikedByMe?: boolean;
