@@ -49,6 +49,11 @@
 }
 
 :root {
+  --deu-navy: #103f8f;
+  --deu-blue: #1c63b0;
+  --deu-sky: #3b93f0;
+  --deu-coral: #ff5d57;
+  --deu-gold: #f5a623;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -123,6 +128,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(1200px 500px at 80% -120px, rgba(59,147,240,0.08), transparent 60%),
+      linear-gradient(180deg, #e9f0fb, #eef2f9);
+    min-height: 100svh;
+  }
+  .dark body {
+    background-color: #07111f;
+    background-image: none;
   }
   html {
     @apply font-sans;

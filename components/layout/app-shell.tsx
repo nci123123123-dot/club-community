@@ -37,12 +37,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-14 w-full max-w-3xl items-center gap-2 px-4">
-          <Link href="/home" className="flex items-center gap-2 font-bold">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="mx-auto flex h-[68px] w-full max-w-4xl items-center gap-2 px-4">
+          <Link href="/home" className="flex items-center gap-2.5">
+            <span
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
+              style={{ background: "linear-gradient(135deg, #103f8f, #1c63b0)" }}
+            >
               <Users className="size-4" />
             </span>
-            <span className="hidden sm:inline">{t("common.appName")}</span>
+            <div className="hidden flex-col sm:flex">
+              <span className="text-sm font-bold leading-tight">동의대학교</span>
+              <span className="text-[10px] leading-tight text-muted-foreground">
+                동아리 커뮤니티 · Club Community
+              </span>
+            </div>
           </Link>
 
           <nav className="ml-4 hidden items-center gap-1 md:flex">
@@ -71,12 +79,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 md:pb-10">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-24 pt-6 md:pb-10">
         {children}
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 backdrop-blur-md md:hidden">
-        <div className="mx-auto grid max-w-3xl grid-cols-4">
+        <div className="mx-auto grid max-w-4xl grid-cols-4">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             return (
