@@ -8,7 +8,8 @@ import { read, write } from "./mock/store";
 // translations via /api/translate. v3 adds admin support + full data reset.
 // v4 forces cache clear to remove stale notices/data from old sessions.
 // v5 removes the seeded "공지" post that was misidentified as a notices section.
-const SEED_VERSION = 5;
+// v6 force-clears cache after category & design changes.
+const SEED_VERSION = 6;
 const VERSION_KEY = "cc.seedVersion";
 const LEGACY_FLAG = "cc.seeded";
 

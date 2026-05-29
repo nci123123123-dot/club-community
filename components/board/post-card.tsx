@@ -33,7 +33,7 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
 
   return (
     <Link href={`/board/${post.id}`} className="block">
-      <Card className="gap-3 p-4 transition-all hover:border-primary/50 hover:shadow-sm">
+      <Card className="gap-3 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-semibold leading-snug">{tr.title}</h3>
           {hasPoll && (

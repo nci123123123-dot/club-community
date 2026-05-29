@@ -9,6 +9,7 @@ import { detectLanguage } from "@/lib/translate";
 import { autoTranslatePost, autoTranslatePoll } from "@/lib/translate-client";
 import { useT } from "@/lib/i18n/provider";
 import { useCurrentUser } from "@/lib/user/provider";
+import { isAdmin } from "@/lib/admin";
 import type { PostCategory } from "@/lib/data/types";
 import { PollBuilder, emptyPollDraft, type PollDraft } from "@/components/poll/poll-builder";
 import { LotteryModal } from "@/components/board/lottery-modal";
@@ -68,6 +69,8 @@ export function PostForm() {
       toast.error(t("onboarding.nameRequired"));
       return;
     }
+    // Guard: non-admins cannot post to notice category
+    const safeCategory = category === "notice" && !isAdmin(user) ? "question" : category;
     const cleanOptions = poll.options.map((o) => o.trim()).filter(Boolean);
     if (pollEnabled) {
       if (!poll.question.trim() || cleanOptions.length < 2) {
@@ -98,7 +101,7 @@ export function PostForm() {
         authorId: user.id,
         authorNationality: user.nationality,
         originalLanguage,
-        category,
+        category: safeCategory,
         tags,
         translations,
       });
@@ -189,7 +192,7 @@ export function PostForm() {
         <div className="space-y-1.5">
           <Label>{t("board.categoryLabel")}</Label>
           <div className="flex gap-2">
-            {(["question", "gathering", "notice"] as PostCategory[]).map((cat) => (
+            {(["question", "gathering", ...(isAdmin(user) ? ["notice"] : [])] as PostCategory[]).map((cat) => (
               <button
                 key={cat}
                 type="button"
