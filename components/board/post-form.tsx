@@ -26,32 +26,26 @@ function newId(): string {
 
 export function PostForm() {
   const router = useRouter();
-  const { t, lang } = useT();
+  const { t } = useT();
   const { user } = useCurrentUser();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-
   const [category, setCategory] = useState<PostCategory>("question");
-
   const [pollEnabled, setPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollDraft>(emptyPollDraft);
+  const [submitting, setSubmitting] = useState(false);
+  const [lotteryPostId, setLotteryPostId] = useState<string | null>(null);
 
   function handleCategoryChange(cat: PostCategory) {
-    const prev = category;
     setCategory(cat);
     if (cat === "gathering" && !pollEnabled) {
       setPollEnabled(true);
-    } else if (prev === "gathering" && cat !== "gathering" && pollEnabled) {
-      const hasInput =
-        poll.question.trim() !== "" || poll.options.some((o) => o.trim() !== "");
+    } else if (cat !== "gathering" && pollEnabled) {
+      const hasInput = poll.question.trim() !== "" || poll.options.some((o) => o.trim() !== "");
       if (!hasInput) setPollEnabled(false);
     }
   }
-
-  const [submitting, setSubmitting] = useState(false);
-  const [lotteryPostId, setLotteryPostId] = useState<string | null>(null);
 
   function handleLotteryClose() {
     const id = lotteryPostId;
@@ -69,7 +63,6 @@ export function PostForm() {
       toast.error(t("onboarding.nameRequired"));
       return;
     }
-    // Guard: non-admins cannot post to notice category
     const safeCategory = category === "notice" && !isAdmin(user) ? "question" : category;
     const cleanOptions = poll.options.map((o) => o.trim()).filter(Boolean);
     if (pollEnabled) {
@@ -81,32 +74,29 @@ export function PostForm() {
         toast.error(t("write.pollDateRequired"));
         return;
       }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (new Date(poll.closesAt) < today) {
+        toast.error(t("write.pollDatePast"));
+        return;
+      }
     }
 
     setSubmitting(true);
     try {
       const repo = getRepository();
       const originalLanguage = detectLanguage(`${title} ${content}`);
-      const translations = await autoTranslatePost(
-        title.trim(),
-        content.trim(),
-        originalLanguage
-      );
-      const tags = tagsInput
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
+      const translations = await autoTranslatePost(title.trim(), content.trim(), originalLanguage);
 
       const post = await repo.createPost({
         authorId: user.id,
         authorNationality: user.nationality,
         originalLanguage,
         category: safeCategory,
-        tags,
+        tags: [],
         translations,
       });
 
-      // fire-and-forget: notify admin of new post
       void fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,15 +112,12 @@ export function PostForm() {
       if (pollEnabled) {
         const { questionTranslations, optionTranslations } =
           await autoTranslatePoll(poll.question.trim(), cleanOptions, originalLanguage);
-
         await repo.createPoll({
           postId: post.id,
           question: poll.question.trim(),
           questionTranslations,
           multiSelect: poll.multiSelect,
-          closesAt: poll.closesAt
-            ? new Date(`${poll.closesAt}T23:59:59`).toISOString()
-            : null,
+          closesAt: new Date(`${poll.closesAt}T23:59:59`).toISOString(),
           options: cleanOptions.map((label, position) => ({
             id: newId(),
             label,
@@ -145,7 +132,6 @@ export function PostForm() {
         });
       }
 
-      // Show lottery roulette for foreign (non-KR) users; navigate after they close it.
       if (user.nationality !== "KR") {
         setLotteryPostId(post.id);
         setSubmitting(false);
@@ -210,27 +196,19 @@ export function PostForm() {
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="tags">{t("board.tagsLabel")}</Label>
-          <Input
-            id="tags"
-            value={tagsInput}
-            placeholder={t("board.tagsPlaceholder")}
-            onChange={(e) => setTagsInput(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-3 rounded-xl border p-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="enable-poll">{t("poll.add")}</Label>
-            <Switch
-              id="enable-poll"
-              checked={pollEnabled}
-              onCheckedChange={setPollEnabled}
-            />
+        {category !== "question" && (
+          <div className="space-y-3 rounded-xl border p-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="enable-poll">{t("poll.add")}</Label>
+              <Switch
+                id="enable-poll"
+                checked={pollEnabled}
+                onCheckedChange={setPollEnabled}
+              />
+            </div>
+            {pollEnabled && <PollBuilder value={poll} onChange={setPoll} />}
           </div>
-          {pollEnabled && <PollBuilder value={poll} onChange={setPoll} />}
-        </div>
+        )}
 
         <Button className="w-full" onClick={submit} disabled={submitting}>
           {submitting && <Loader2 className="size-4 animate-spin" />}

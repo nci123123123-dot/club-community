@@ -9,7 +9,6 @@ import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
 import { useT } from "@/lib/i18n/provider";
 import { PostCard } from "./post-card";
-import { TranslatedText } from "@/components/translated-text";
 import { Input } from "@/components/ui/input";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,12 +27,10 @@ export function BoardList() {
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [pollMap, setPollMap] = useState<Map<string, string | null>>(new Map());
   const [query, setQuery] = useState("");
-  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<PostCategory | null>(
     () => parseCategoryParam(searchParams.get("category"))
   );
 
-  // Sync filter when URL param changes (e.g. clicking nav sub-items)
   useEffect(() => {
     setActiveCategory(parseCategoryParam(searchParams.get("category")));
   }, [searchParams]);
@@ -43,9 +40,7 @@ export function BoardList() {
     async function load() {
       const repo = getRepository();
       const list = await repo.listPosts();
-      const polls = await Promise.all(
-        list.map((p) => repo.getPollByPostId(p.id))
-      );
+      const polls = await Promise.all(list.map((p) => repo.getPollByPostId(p.id)));
       if (!active) return;
       setPosts(list);
       setPollMap(
@@ -59,30 +54,19 @@ export function BoardList() {
       );
     }
     void load();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
-
-  const tags = useMemo(() => {
-    if (!posts) return [];
-    return Array.from(new Set(posts.flatMap((p) => p.tags)));
-  }, [posts]);
 
   const filtered = useMemo(() => {
     if (!posts) return [];
     const q = query.trim().toLowerCase();
     return posts.filter((post) => {
       if (activeCategory && (post.category ?? "question") !== activeCategory) return false;
-      if (activeTag && !post.tags.includes(activeTag)) return false;
       if (!q) return true;
       const tr = getTranslation(post, lang);
-      return (
-        tr.title.toLowerCase().includes(q) ||
-        tr.content.toLowerCase().includes(q)
-      );
+      return tr.title.toLowerCase().includes(q) || tr.content.toLowerCase().includes(q);
     });
-  }, [posts, query, activeTag, activeCategory, lang]);
+  }, [posts, query, activeCategory, lang]);
 
   return (
     <div className="space-y-5">
@@ -124,38 +108,6 @@ export function BoardList() {
           className="pl-9"
         />
       </div>
-
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTag(null)}
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-              activeTag === null
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t("board.allTags")}
-          </button>
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => setActiveTag(tag)}
-              className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                activeTag === tag
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <TranslatedText text={tag} prefix="#" />
-            </button>
-          ))}
-        </div>
-      )}
 
       {posts === null ? (
         <div className="space-y-3">

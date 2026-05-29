@@ -14,8 +14,6 @@ import { isAdmin } from "@/lib/admin";
 import { PollView } from "@/components/poll/poll-view";
 import { CommentSection } from "@/components/board/comment-section";
 import { NationalityBadge } from "@/components/nationality-badge";
-import { TranslatedText } from "@/components/translated-text";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -155,11 +153,6 @@ export function PostDetail({ postId }: PostDetailProps) {
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <NationalityBadge nationality={post.authorNationality} />
-          {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="font-normal">
-              <TranslatedText text={tag} prefix="#" />
-            </Badge>
-          ))}
           <span className="ml-auto">{formatDateTime(post.createdAt, lang)}</span>
         </div>
       </header>

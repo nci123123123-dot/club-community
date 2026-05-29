@@ -103,6 +103,7 @@ export function PollBuilder({ value, onChange }: PollBuilderProps) {
           id="poll-closes"
           type="date"
           value={value.closesAt}
+          min={new Date().toISOString().slice(0, 10)}
           onChange={(e) => onChange({ ...value, closesAt: e.target.value })}
         />
       </div>

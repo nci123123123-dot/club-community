@@ -7,9 +7,7 @@ import { getTranslation, excerpt } from "@/lib/post";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
 import { NationalityBadge } from "@/components/nationality-badge";
-import { TranslatedText } from "@/components/translated-text";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_STYLE: Record<PostCategory, string> = {
@@ -56,11 +54,6 @@ export function PostCard({ post, pollClosesAt }: PostCardProps) {
             {t(`board.category${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
           </span>
           <NationalityBadge nationality={post.authorNationality} />
-          {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="font-normal">
-              <TranslatedText text={tag} prefix="#" />
-            </Badge>
-          ))}
           <div className="ml-auto flex items-center gap-3">
             <span>👍 {post.likeCount ?? 0}</span>
             <span>💬 {post.commentCount ?? 0}</span>
