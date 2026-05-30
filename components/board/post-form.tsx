@@ -142,7 +142,7 @@ export function PostForm() {
         });
       }
 
-      if (user.nationality !== "KR") {
+      if (user.nationality !== "KR" && safeCategory === "gathering") {
         setLotteryPostId(post.id);
         setSubmitting(false);
       } else {
