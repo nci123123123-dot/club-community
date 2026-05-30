@@ -6,7 +6,7 @@ export const NATIONALITY_COLOR: Record<Nationality, string> = {
   JP: "var(--chart-2)",
   CN: "var(--chart-3)",
   VN: "var(--chart-4)",
-  US: "var(--chart-5)",
+  EN: "var(--chart-5)",
   OTHER: "var(--muted-foreground)",
 };
 
@@ -16,6 +16,6 @@ export const NATIONALITY_CODE: Record<Nationality, string> = {
   JP: "JP",
   CN: "CN",
   VN: "VN",
-  US: "US",
+  EN: "EN",
   OTHER: "ETC",
 };

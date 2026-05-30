@@ -1,12 +1,12 @@
 export type Language = "ko" | "ja" | "zh" | "vi" | "en";
 
-export type Nationality = "KR" | "JP" | "CN" | "VN" | "US" | "OTHER";
+export type Nationality = "KR" | "JP" | "CN" | "VN" | "EN" | "OTHER";
 
 export type PostCategory = "question" | "gathering" | "notice";
 
 export const LANGUAGES: Language[] = ["ko", "ja", "zh", "vi", "en"];
 
-export const NATIONALITIES: Nationality[] = ["KR", "JP", "CN", "VN", "US", "OTHER"];
+export const NATIONALITIES: Nationality[] = ["KR", "JP", "CN", "VN", "EN", "OTHER"];
 
 export interface User {
   id: string;
