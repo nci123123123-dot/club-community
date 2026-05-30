@@ -11,6 +11,7 @@ import type {
   PollVote,
   Post,
   Schedule,
+  Translation,
   User,
 } from "../types";
 import { NATIONALITIES } from "../types";
@@ -102,6 +103,26 @@ export class MockRepository implements DataRepository {
     const posts = read<Post[]>(KEY.posts, []);
     write(KEY.posts, [...posts, post]);
     return post;
+  }
+
+  async addTranslations(postId: string, translations: Translation[]): Promise<void> {
+    if (translations.length === 0) return;
+    const posts = read<Post[]>(KEY.posts, []);
+    const newLangs = new Set(translations.map((t) => t.language));
+    write(
+      KEY.posts,
+      posts.map((p) =>
+        p.id !== postId
+          ? p
+          : {
+              ...p,
+              translations: [
+                ...p.translations.filter((t) => !newLangs.has(t.language)),
+                ...translations,
+              ],
+            }
+      )
+    );
   }
 
   async deletePost(id: string): Promise<void> {

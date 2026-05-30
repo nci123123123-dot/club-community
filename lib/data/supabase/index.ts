@@ -337,6 +337,19 @@ export class SupabaseRepository implements DataRepository {
     throwIfError(error, "deletePost");
   }
 
+  async addTranslations(postId: string, translations: Translation[]): Promise<void> {
+    if (translations.length === 0) return;
+    // Best-effort: insert non-original translations after post creation
+    await supabase.from("translations").insert(
+      translations.map((t) => ({
+        post_id: postId,
+        language: t.language,
+        title: t.title,
+        content: t.content,
+      }))
+    );
+  }
+
   // ---- polls ----
 
   async getPollByPostId(postId: string): Promise<Poll | null> {

@@ -10,6 +10,7 @@ import type {
   PollVote,
   Post,
   Schedule,
+  Translation,
   User,
 } from "./types";
 
@@ -36,6 +37,7 @@ export interface DataRepository {
   getPost(id: string, studentId?: string): Promise<Post | null>;
   createPost(input: Omit<Post, "id" | "createdAt">): Promise<Post>;
   deletePost(id: string): Promise<void>;
+  addTranslations(postId: string, translations: Translation[]): Promise<void>;
 
   // polls
   getPollByPostId(postId: string): Promise<Poll | null>;

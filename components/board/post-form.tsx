@@ -86,16 +86,26 @@ export function PostForm() {
     try {
       const repo = getRepository();
       const originalLanguage = detectLanguage(`${title} ${content}`);
-      const translations = await autoTranslatePost(title.trim(), content.trim(), originalLanguage);
 
+      // Save with original-language translation only — fast, no API wait
       const post = await repo.createPost({
         authorId: user.id,
         authorNationality: user.nationality,
         originalLanguage,
         category: safeCategory,
         tags: [],
-        translations,
+        translations: [{ language: originalLanguage, title: title.trim(), content: content.trim() }],
       });
+
+      // Background: translate to other languages (fire-and-forget)
+      void autoTranslatePost(title.trim(), content.trim(), originalLanguage)
+        .then((all) =>
+          repo.addTranslations(
+            post.id,
+            all.filter((tr) => tr.language !== originalLanguage)
+          )
+        )
+        .catch(() => {});
 
       void fetch("/api/notify", {
         method: "POST",
