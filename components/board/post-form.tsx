@@ -125,8 +125,8 @@ export function PostForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "new_post",
-          title: `새 글: ${title.trim()}`,
-          body: content.trim().slice(0, 100),
+          category: safeCategory,
+          title: title.trim(),
           url: `${window.location.origin}/board/${post.id}`,
         }),
       });
