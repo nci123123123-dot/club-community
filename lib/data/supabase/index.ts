@@ -518,11 +518,15 @@ export class SupabaseRepository implements DataRepository {
   }
 
   async closePoll(pollId: string): Promise<void> {
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from("polls")
       .update({ closes_at: new Date().toISOString() })
-      .eq("id", pollId);
+      .eq("id", pollId)
+      .select("id");
     throwIfError(error, "closePoll");
+    if (!data || data.length === 0) {
+      throw new Error("Poll update blocked — missing RLS UPDATE policy on polls table");
+    }
   }
 
   // ---- schedules ----
