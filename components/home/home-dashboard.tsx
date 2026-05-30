@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Activity, BarChart3, FileText } from "lucide-react";
+import { Activity, BarChart3, FileText, Megaphone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Poll, Post } from "@/lib/data/types";
 import { getRepository } from "@/lib/data";
 import { getTranslation } from "@/lib/post";
+import { formatDate } from "@/lib/format";
 import { useT } from "@/lib/i18n/provider";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface DashboardData {
+  noticePosts: Post[];
   recentPosts: Post[];
   activePolls: { poll: Poll; post: Post }[];
 }
@@ -35,7 +37,11 @@ export function HomeDashboard() {
             (!entry.poll.closesAt || new Date(entry.poll.closesAt).getTime() > now)
         );
       if (!active) return;
-      setData({ recentPosts: posts.slice(0, 3), activePolls });
+      setData({
+        noticePosts: posts.filter((p) => p.category === "notice").slice(0, 3),
+        recentPosts: posts.slice(0, 3),
+        activePolls,
+      });
     }
     void load();
     return () => { active = false; };
@@ -47,6 +53,7 @@ export function HomeDashboard() {
         <h1 className="text-2xl font-bold tracking-tight">{t("home.greeting")}</h1>
         <p className="text-sm text-muted-foreground">{t("common.appName")}</p>
       </header>
+
       {data === null ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {[0, 1, 2].map((i) => (
@@ -58,47 +65,74 @@ export function HomeDashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Section icon={Activity} title={t("home.mySchedule")} empty={null}>
-            <Link
-              href="/activity"
-              className="block rounded-md px-1.5 py-1 text-sm text-primary hover:bg-muted"
+        <div className="space-y-4">
+          {/* Notices — full-width, only when posts exist */}
+          {data.noticePosts.length > 0 && (
+            <Card className="gap-3 p-4">
+              <div className="flex items-center gap-2 font-semibold">
+                <Megaphone className="size-4 text-primary" />
+                {t("home.notices")}
+              </div>
+              <div className="space-y-0.5">
+                {data.noticePosts.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/board/${p.id}`}
+                    className="flex items-center justify-between rounded-md px-1.5 py-1 text-sm hover:bg-muted"
+                  >
+                    <span className="truncate">{getTranslation(p, lang).title}</span>
+                    <span className="ml-3 shrink-0 text-xs text-muted-foreground">
+                      {formatDate(p.createdAt, lang)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* 2-column grid */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Section icon={Activity} title={t("home.mySchedule")} empty={null}>
+              <Link
+                href="/activity"
+                className="block rounded-md px-1.5 py-1 text-sm text-primary hover:bg-muted"
+              >
+                {t("nav.activity")} →
+              </Link>
+            </Section>
+
+            <Section
+              icon={BarChart3}
+              title={t("home.activePolls")}
+              empty={data.activePolls.length === 0 ? t("home.noPolls") : null}
             >
-              {t("nav.activity")} →
-            </Link>
-          </Section>
+              {data.activePolls.map(({ poll, post }) => (
+                <Link
+                  key={poll.id}
+                  href={`/board/${post.id}`}
+                  className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
+                >
+                  {poll.questionTranslations?.[lang] ?? poll.question}
+                </Link>
+              ))}
+            </Section>
 
-          <Section
-            icon={BarChart3}
-            title={t("home.activePolls")}
-            empty={data.activePolls.length === 0 ? t("home.noPolls") : null}
-          >
-            {data.activePolls.map(({ poll, post }) => (
-              <Link
-                key={poll.id}
-                href={`/board/${post.id}`}
-                className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
-              >
-                {poll.questionTranslations?.[lang] ?? poll.question}
-              </Link>
-            ))}
-          </Section>
-
-          <Section
-            icon={FileText}
-            title={t("home.recentPosts")}
-            empty={data.recentPosts.length === 0 ? t("home.noPosts") : null}
-          >
-            {data.recentPosts.map((p) => (
-              <Link
-                key={p.id}
-                href={`/board/${p.id}`}
-                className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
-              >
-                {getTranslation(p, lang).title}
-              </Link>
-            ))}
-          </Section>
+            <Section
+              icon={FileText}
+              title={t("home.recentPosts")}
+              empty={data.recentPosts.length === 0 ? t("home.noPosts") : null}
+            >
+              {data.recentPosts.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/board/${p.id}`}
+                  className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
+                >
+                  {getTranslation(p, lang).title}
+                </Link>
+              ))}
+            </Section>
+          </div>
         </div>
       )}
     </div>
