@@ -370,6 +370,20 @@ export class MockRepository implements DataRepository {
     );
   }
 
+  async deleteNotification(id: string): Promise<void> {
+    write(
+      KEY.notifications,
+      read<AppNotification[]>(KEY.notifications, []).filter((n) => n.id !== id)
+    );
+  }
+
+  async clearAllNotifications(userId: string): Promise<void> {
+    write(
+      KEY.notifications,
+      read<AppNotification[]>(KEY.notifications, []).filter((n) => n.userId !== userId)
+    );
+  }
+
   // ---- lottery ----
   async addLotteryWin(studentId: string): Promise<LotteryWin> {
     const win: LotteryWin = {

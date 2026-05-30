@@ -71,6 +71,8 @@ export interface DataRepository {
     input: Omit<AppNotification, "id" | "createdAt" | "read">
   ): Promise<AppNotification>;
   markAllRead(userId: string): Promise<void>;
+  deleteNotification(id: string): Promise<void>;
+  clearAllNotifications(userId: string): Promise<void>;
 
   // likes
   togglePostLike(postId: string, studentId: string): Promise<{ liked: boolean; count: number }>;

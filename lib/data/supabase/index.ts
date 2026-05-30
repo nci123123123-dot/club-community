@@ -769,6 +769,16 @@ export class SupabaseRepository implements DataRepository {
     throwIfError(error, "markAllRead");
   }
 
+  async deleteNotification(id: string): Promise<void> {
+    const { error } = await supabase.from("notifications").delete().eq("id", id);
+    throwIfError(error, "deleteNotification");
+  }
+
+  async clearAllNotifications(userId: string): Promise<void> {
+    const { error } = await supabase.from("notifications").delete().eq("user_id", userId);
+    throwIfError(error, "clearAllNotifications");
+  }
+
   // ---- lottery ----
 
   async addLotteryWin(studentId: string): Promise<LotteryWin> {
