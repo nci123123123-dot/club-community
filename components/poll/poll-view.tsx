@@ -69,9 +69,12 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [allVotes, setAllVotes] = useState<PollVote[]>([]);
+  // Tracks a manual close so isClosed updates immediately without prop re-fetch
+  const [manuallyClosedAt, setManuallyClosedAt] = useState<string | null>(null);
 
   const admin = isAdmin(user);
-  const isClosed = !!poll.closesAt && new Date(poll.closesAt).getTime() < Date.now();
+  const effectiveClosesAt = manuallyClosedAt ?? poll.closesAt;
+  const isClosed = !!effectiveClosesAt && new Date(effectiveClosesAt).getTime() < Date.now();
   const isAuthor = !!user && !!postAuthorId && user.id === postAuthorId;
 
   const refresh = useCallback(async () => {
@@ -130,6 +133,7 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
     setSubmitting(true);
     try {
       await getRepository().closePoll(poll.id);
+      setManuallyClosedAt(new Date().toISOString()); // update isClosed immediately
       toast.success(t("poll.closeSuccess"));
       await refresh();
     } finally {
@@ -274,9 +278,9 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
               })}
           </div>
 
-          {poll.closesAt && !isClosed && (
+          {effectiveClosesAt && !isClosed && (
             <p className="text-xs text-muted-foreground">
-              {timeUntilClose(poll.closesAt, lang)}
+              {timeUntilClose(effectiveClosesAt, lang)}
             </p>
           )}
 
