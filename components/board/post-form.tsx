@@ -138,7 +138,7 @@ export function PostForm() {
         await repo.createNotification({
           userId: user.id,
           type: "new_poll",
-          payload: { title: title.trim() },
+          payload: { title: title.trim(), postId: post.id },
         });
       }
 

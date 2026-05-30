@@ -65,7 +65,7 @@ export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
         authorNationality: user.nationality,
         content: draft.trim(),
       });
-      await repo.createNotification({ userId: user.id, type: "new_comment", payload: {} });
+      await repo.createNotification({ userId: user.id, type: "new_comment", payload: { postId } });
       setDraft("");
       await load();
     } finally {
