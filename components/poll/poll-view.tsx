@@ -247,12 +247,15 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() => toggle(option.id)}
+                    disabled={isClosed}
+                    onClick={() => !isClosed && toggle(option.id)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-xl border-2 px-5 py-4 text-left text-base font-medium transition-all",
-                      active
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40 hover:bg-muted/30"
+                      isClosed
+                        ? "cursor-not-allowed opacity-60"
+                        : active
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/40 hover:bg-muted/30"
                     )}
                   >
                     <span
@@ -280,7 +283,7 @@ export function PollView({ poll, postAuthorId }: PollViewProps) {
           <Button
             className="h-12 w-full text-base font-semibold"
             onClick={vote}
-            disabled={submitting || selected.length === 0}
+            disabled={submitting || selected.length === 0 || isClosed}
           >
             {submitting && <Loader2 className="size-4 animate-spin" />}
             {t("poll.vote")}

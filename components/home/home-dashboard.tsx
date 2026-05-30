@@ -79,7 +79,7 @@ export function HomeDashboard() {
                 href={`/board/${post.id}`}
                 className="block truncate rounded-md px-1.5 py-1 text-sm hover:bg-muted"
               >
-                {poll.question}
+                {poll.questionTranslations?.[lang] ?? poll.question}
               </Link>
             ))}
           </Section>

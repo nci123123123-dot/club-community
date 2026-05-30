@@ -32,13 +32,13 @@ function BoardSubNavLinks({ tFn }: { tFn: (key: string) => string }) {
           key={sub.href}
           href={sub.href}
           className={cn(
-            "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+            "inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-medium transition-colors",
             active === sub.category
               ? "bg-[#e8f1fd] text-[#1c63b0] dark:bg-primary/20 dark:text-primary"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <sub.icon className="size-3.5" />
+          <sub.icon className="size-3.5 shrink-0" />
           {tFn(sub.labelKey)}
         </Link>
       ))}
@@ -90,13 +90,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors",
                     isActive(pathname, item.href)
                       ? "bg-[#e8f1fd] text-[#1c63b0] dark:bg-primary/20 dark:text-primary"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <item.icon className="size-4" />
+                  <item.icon className="size-4 shrink-0" />
                   {t(item.labelKey)}
                 </Link>
                 {item.href === "/board" && (
