@@ -119,6 +119,18 @@ export function PostForm() {
         }),
       });
 
+      // Push notification to all subscribers
+      void fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_post",
+          title: `새 글: ${title.trim()}`,
+          body: content.trim().slice(0, 100),
+          url: `${window.location.origin}/board/${post.id}`,
+        }),
+      });
+
       if (pollEnabled) {
         const { questionTranslations, optionTranslations } =
           await autoTranslatePoll(poll.question.trim(), cleanOptions, originalLanguage);

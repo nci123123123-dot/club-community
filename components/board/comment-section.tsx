@@ -66,6 +66,28 @@ export function CommentSection({ postId, postAuthorId }: CommentSectionProps) {
         content: draft.trim(),
       });
       await repo.createNotification({ userId: user.id, type: "new_comment", payload: { postId } });
+
+      // Push to post author (fire-and-forget, skip if author is the commenter)
+      if (postAuthorId && postAuthorId !== user.id) {
+        void (async () => {
+          try {
+            const author = await repo.getUserById(postAuthorId);
+            if (!author) return;
+            void fetch("/api/push", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "new_comment",
+                title: "새 댓글이 달렸습니다",
+                body: draft.trim().slice(0, 100),
+                targetUserId: author.studentId,
+                url: `${window.location.origin}/board/${postId}`,
+              }),
+            });
+          } catch { /* ignore */ }
+        })();
+      }
+
       setDraft("");
       await load();
     } finally {

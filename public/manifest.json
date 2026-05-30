@@ -1,0 +1,13 @@
+{
+  "name": "동의대 동아리 커뮤니티",
+  "short_name": "동아리",
+  "description": "동의대학교 동아리연합회 커뮤니티",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c63b0",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
